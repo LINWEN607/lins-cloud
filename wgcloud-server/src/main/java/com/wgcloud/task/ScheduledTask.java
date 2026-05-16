@@ -365,6 +365,16 @@ public class ScheduledTask {
                 List<DeskState> DESK_STATE_LIST = new ArrayList<DeskState>();
                 DESK_STATE_LIST.addAll(BatchData.DESK_STATE_LIST);
                 BatchData.DESK_STATE_LIST.clear();
+
+                Map<String, DeskState> uniqueMap = new LinkedHashMap<String, DeskState>();
+                for (DeskState ds : DESK_STATE_LIST) {
+                    String key = ds.getHostname() + "_" + ds.getFileSystem();
+                    if (!uniqueMap.containsKey(key)) {
+                        uniqueMap.put(key, ds);
+                    }
+                }
+                DESK_STATE_LIST = new ArrayList<DeskState>(uniqueMap.values());
+
                 List<String> hostnameList = new ArrayList<String>();
                 for (DeskState deskState : DESK_STATE_LIST) {
                     if (!hostnameList.contains(deskState.getHostname())) {
