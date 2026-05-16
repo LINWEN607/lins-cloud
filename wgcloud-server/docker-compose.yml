@@ -7,9 +7,10 @@ services:
       MYSQL_DATABASE: wgcloud
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Shanghai
     volumes:
       - /data/wgcloud/mysql:/var/lib/mysql
-      - /data/wgcloud/sql/wgcloud.sql:/docker-entrypoint-initdb.d/wgcloud.sql
+      - /data/wgcloud/server/wgcloud.sql:/docker-entrypoint-initdb.d/wgcloud.sql
     ports:
       - "3306:3306"
     healthcheck:
@@ -28,8 +29,7 @@ services:
       - spring.datasource.password=123456
     volumes:
       - /data/wgcloud/server/logs:/app/log
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       mysql:
         condition: service_healthy
-
-
