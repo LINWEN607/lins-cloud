@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.wgcloud.mapper.FeishuConfigMapper">
+	<resultMap id="resultMap" type="com.wgcloud.entity.FeishuConfig">
+		<id column="ID" property="id" jdbcType="CHAR" />
+		<result column="WEBHOOK_URL" property="webhookUrl" jdbcType="VARCHAR" />
+		<result column="SECRET" property="secret" jdbcType="VARCHAR" />
+		<result column="ENABLED" property="enabled" jdbcType="CHAR" />
+		<result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+	<sql id="tableColumnList">
+		ID,WEBHOOK_URL,SECRET,ENABLED,CREATE_TIME
+	</sql>
+
+	<delete id="deleteById" parameterType="java.lang.String">
+		DELETE FROM ALERT_FEISHU
+		WHERE ID IN
+		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	<insert id="save" parameterType="com.wgcloud.entity.FeishuConfig">
+		INSERT INTO ALERT_FEISHU
+		<trim prefix="(" suffix=")" suffixOverrides="," >
+			<if test="id != null" >ID,</if>
+			<if test="webhookUrl != null" >WEBHOOK_URL,</if>
+			<if test="secret != null">SECRET,</if>
+			<if test="enabled != null">ENABLED,</if>
+			<if test="createTime != null" >CREATE_TIME</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides="," >
+			<if test="id != null" >#{id},</if>
+			<if test="webhookUrl != null" >#{webhookUrl},</if>
+			<if test="secret != null" >#{secret},</if>
+			<if test="enabled != null" >#{enabled},</if>
+			<if test="createTime != null" >#{createTime}</if>
+		</trim>
+	</insert>
+
+	<update id="updateById" parameterType="com.wgcloud.entity.FeishuConfig">
+		UPDATE ALERT_FEISHU
+		<set>
+			<if test="webhookUrl != null">
+				WEBHOOK_URL = #{webhookUrl},
+			</if>
+			<if test="secret != null">
+				SECRET = #{secret},
+			</if>
+			<if test="enabled != null" >
+				ENABLED = #{enabled},
+			</if>
+		</set>
+		WHERE ID = #{id}
+	</update>
+
+
+	  <select id="selectAllByParams" parameterType="map" resultMap="resultMap">
+		SELECT
+		<include refid="tableColumnList" />
+		FROM ALERT_FEISHU t
+		 ORDER BY CREATE_TIME DESC
+	</select>
+
+	<select id="selectByParams" parameterType="map" resultMap="resultMap">
+		SELECT
+		<include refid="tableColumnList" />
+		FROM ALERT_FEISHU
+		 ORDER BY CREATE_TIME DESC
+	</select>
+
+</mapper>

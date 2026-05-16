@@ -295,3 +295,29 @@ CREATE TABLE `TCP_STATE` (
   PRIMARY KEY (`ID`),
   KEY `TCP_ACC_HOST_INDEX` (`HOST_NAME`,`CREATE_TIME`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for alert_feishu
+-- ----------------------------
+DROP TABLE IF EXISTS `ALERT_FEISHU`;
+CREATE TABLE `ALERT_FEISHU` (
+  `ID` char(32) NOT NULL,
+  `WEBHOOK_URL` varchar(500) DEFAULT NULL,
+  `SECRET` varchar(200) DEFAULT NULL,
+  `ENABLED` char(1) DEFAULT '1',
+  `CREATE_TIME` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for alert_dingtalk
+-- ----------------------------
+DROP TABLE IF EXISTS `ALERT_DINGTALK`;
+CREATE TABLE `ALERT_DINGTALK` (
+  `ID` char(32) NOT NULL,
+  `WEBHOOK_URL` varchar(500) DEFAULT NULL,
+  `SECRET` varchar(200) DEFAULT NULL,
+  `ENABLED` char(1) DEFAULT '1',
+  `CREATE_TIME` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <div th:replace="common/header.html"></div>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div th:replace="common/chart.html"></div>
+
+<div class="wrapper">
+  <div th:replace="common/navbar.html"></div>
+  <div th:replace="common/aside.html"></div>
+
+  <div class="content-wrapper" style="font-size: 0.9rem">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1></h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item active"></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-10">
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">多渠道告警设置</h3>
+              </div>
+              <div class="card-body">
+                <ul class="nav nav-tabs" id="alertTab" role="tablist">
+                  <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab == 'email' ? 'active' : ''}" id="email-tab" data-toggle="tab" href="#email" role="tab" aria-controls="email" aria-selected="true">邮箱</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab == 'feishu' ? 'active' : ''}" id="feishu-tab" data-toggle="tab" href="#feishu" role="tab" aria-controls="feishu" aria-selected="false">飞书</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" th:classappend="${tab == 'dingtalk' ? 'active' : ''}" id="dingtalk-tab" data-toggle="tab" href="#dingtalk" role="tab" aria-controls="dingtalk" aria-selected="false">钉钉</a>
+                  </li>
+                </ul>
+                <div class="tab-content" id="alertTabContent">
+
+                  <!-- ========== 邮箱 Tab ========== -->
+                  <div class="tab-pane fade" th:classappend="${tab == 'email' ? 'show active' : ''}" id="email" role="tabpanel" aria-labelledby="email-tab">
+                    <form role="form" id="formEmail" method="post" th:action="@{'/alert/save?type=email'}">
+                      <input type="hidden" name="id" th:value="${mailSet?.id}"/>
+                      <div class="card-body">
+                        <div class="form-group">
+                          <label><font color="red">*</font>发送邮箱帐号</label>
+                          <input type="text" th:value="${mailSet?.fromMailName}" autocomplete="off" class="form-control" name="fromMailName" placeholder="123456@qq.com">
+                        </div>
+                        <div class="form-group">
+                          <label><font color="red">*</font>发送邮箱密码</label>
+                          <input type="password" th:value="${mailSet?.fromPwd}" class="form-control" name="fromPwd">
+                        </div>
+                        <div class="form-group">
+                          <label><font color="red">*</font>发送邮箱SMTP服务器</label>
+                          <input type="text" th:value="${mailSet?.smtpHost}" autocomplete="off" class="form-control" name="smtpHost" placeholder="如smtp.qq.com">
+                        </div>
+                        <div class="form-group">
+                          <label><font color="red">*</font>是否启用安全链接(SSL)</label>
+                          <select class="form-control" onchange="setSmtpPort()" name="smtpSSL" id="smtpSSL">
+                            <option value="0">不启用</option>
+                            <option value="1">启用</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label><font color="red">*</font>发送邮箱的SMTP端口,25或465</label>
+                          <input type="text" th:value="${mailSet?.smtpPort}" autocomplete="off" class="form-control" name="smtpPort" id="smtpPort">
+                        </div>
+                        <div class="form-group">
+                          <label><font color="red">*</font>接受邮件,多个邮件用;隔开</label>
+                          <input type="text" th:value="${mailSet?.toMail}" autocomplete="off" class="form-control" name="toMail" placeholder="123@qq.com;456@qq.com">
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <button type="button" onclick="test('email')" class="btn btn-primary btn-sm">测试发送</button>
+                        <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <!-- ========== 飞书 Tab ========== -->
+                  <div class="tab-pane fade" th:classappend="${tab == 'feishu' ? 'show active' : ''}" id="feishu" role="tabpanel" aria-labelledby="feishu-tab">
+                    <form role="form" id="formFeishu" method="post" th:action="@{'/alert/save?type=feishu'}">
+                      <input type="hidden" name="id" th:value="${feishuConfig?.id}"/>
+                      <div class="card-body">
+                        <div class="form-group">
+                          <label><font color="red">*</font>Webhook地址</label>
+                          <input type="text" th:value="${feishuConfig?.webhookUrl}" autocomplete="off" class="form-control" name="webhookUrl" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx">
+                        </div>
+                        <div class="form-group">
+                          <label>签名校验(可选)</label>
+                          <input type="text" th:value="${feishuConfig?.secret}" autocomplete="off" class="form-control" name="secret" placeholder="留空则不启用签名">
+                        </div>
+                        <div class="form-group">
+                          <label>是否启用</label>
+                          <select class="form-control" name="enabled">
+                            <option value="1">启用</option>
+                            <option value="0">停用</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <button type="button" onclick="test('feishu')" class="btn btn-primary btn-sm">测试发送</button>
+                        <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <!-- ========== 钉钉 Tab ========== -->
+                  <div class="tab-pane fade" th:classappend="${tab == 'dingtalk' ? 'show active' : ''}" id="dingtalk" role="tabpanel" aria-labelledby="dingtalk-tab">
+                    <form role="form" id="formDingtalk" method="post" th:action="@{'/alert/save?type=dingtalk'}">
+                      <input type="hidden" name="id" th:value="${dingtalkConfig?.id}"/>
+                      <div class="card-body">
+                        <div class="form-group">
+                          <label><font color="red">*</font>Webhook地址</label>
+                          <input type="text" th:value="${dingtalkConfig?.webhookUrl}" autocomplete="off" class="form-control" name="webhookUrl" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx">
+                        </div>
+                        <div class="form-group">
+                          <label>加签秘钥(可选)</label>
+                          <input type="text" th:value="${dingtalkConfig?.secret}" autocomplete="off" class="form-control" name="secret" placeholder="留空则不启用签名">
+                        </div>
+                        <div class="form-group">
+                          <label>是否启用</label>
+                          <select class="form-control" name="enabled">
+                            <option value="1">启用</option>
+                            <option value="0">停用</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <button type="button" onclick="test('dingtalk')" class="btn btn-primary btn-sm">测试发送</button>
+                        <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                      </div>
+                    </form>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div th:replace="common/footer.html"></div>
+</div>
+
+<script th:inline="javascript">
+    $(document).ready(function(){
+        $("#smtpSSL").val([[${mailSet?.smtpSSL}]]);
+        $("#formFeishu [name='enabled']").val([[${feishuConfig?.enabled}]]);
+        $("#formDingtalk [name='enabled']").val([[${dingtalkConfig?.enabled}]]);
+    });
+
+    function test(type) {
+        if (type === 'email') {
+            $("#formEmail").attr("action","/wgcloud/alert/test?type=email");
+            $("#formEmail").submit();
+        } else if (type === 'feishu') {
+            $("#formFeishu").attr("action","/wgcloud/alert/test?type=feishu");
+            $("#formFeishu").submit();
+        } else if (type === 'dingtalk') {
+            $("#formDingtalk").attr("action","/wgcloud/alert/test?type=dingtalk");
+            $("#formDingtalk").submit();
+        }
+    }
+
+    function setSmtpPort(){
+        if($("#smtpSSL").val()=='0'){
+            $("#smtpPort").val('25')
+        }
+        if($("#smtpSSL").val()=='1'){
+            $("#smtpPort").val('465')
+        }
+    }
+
+    toastr.options.timeOut = 15000;
+    var msg = [[${msg}]];
+    if(msg!=''){
+        if(msg.indexOf("测试发送失败")>-1){
+            toastr.error(msg);
+        }else{
+            toastr.success(msg);
+        }
+    }
+</script>
+</body>
+</html>

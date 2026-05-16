@@ -1,6 +1,8 @@
 package com.wgcloud.util.staticvar;
 
 
+import com.wgcloud.entity.DingtalkConfig;
+import com.wgcloud.entity.FeishuConfig;
 import com.wgcloud.entity.MailSet;
 
 /**
@@ -51,5 +53,9 @@ public class StaticKeys {
     public static String DOWN_STATE = "2";
 
     public static MailSet mailSet = null;
+
+    public static FeishuConfig feishuConfig = null;
+
+    public static DingtalkConfig dingtalkConfig = null;
 
 }

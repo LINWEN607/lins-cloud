@@ -67,6 +67,10 @@ public class ScheduledTask {
     @Autowired
     MailSetService mailSetService;
     @Autowired
+    FeishuConfigService feishuConfigService;
+    @Autowired
+    DingtalkConfigService dingtalkConfigService;
+    @Autowired
     IntrusionInfoService intrusionInfoService;
     @Autowired
     HostInfoService hostInfoService;
@@ -96,6 +100,14 @@ public class ScheduledTask {
             List<MailSet> list = mailSetService.selectAllByParams(params);
             if (list.size() > 0) {
                 StaticKeys.mailSet = list.get(0);
+            }
+            List<FeishuConfig> feishuList = feishuConfigService.selectAllByParams(params);
+            if (feishuList.size() > 0) {
+                StaticKeys.feishuConfig = feishuList.get(0);
+            }
+            List<DingtalkConfig> dingtalkList = dingtalkConfigService.selectAllByParams(params);
+            if (dingtalkList.size() > 0) {
+                StaticKeys.dingtalkConfig = dingtalkList.get(0);
             }
         } catch (Exception e) {
             logger.error("初始化操作错误", e);

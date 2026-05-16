@@ -189,22 +189,22 @@
                     <li class="nav-item has-treeview">
                         <a  href="javascript:void(0);" class="nav-link">
                 </th:block>
-                <i class="nav-icon far fa-envelope"></i>
+                <i class="nav-icon fas fa-bell"></i>
                 <p>
-                    邮件预警
+                    告警设置
                     <i class="fas fa-angle-left right"></i>
                 </p>
                 </a>
                 <ul class="nav nav-treeview">
                     <li class="nav-item">
                         <th:block th:if="${session.menuActive eq '31'}">
-                            <a th:href="@{'/mailset/list'}" class="nav-link active">
+                            <a th:href="@{'/alert/list'}" class="nav-link active">
                         </th:block>
                         <th:block th:unless="${session.menuActive eq '31'}">
-                            <a th:href="@{'/mailset/list'}" class="nav-link">
+                            <a th:href="@{'/alert/list'}" class="nav-link">
                         </th:block>
                         <i class="far fa-circle nav-icon"></i>
-                        <p>设置</p>
+                        <p>多渠道告警</p>
                         </a>
                     </li>
 
