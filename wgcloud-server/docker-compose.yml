@@ -9,11 +9,11 @@ services:
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     volumes:
       - /data/wgcloud/mysql:/var/lib/mysql
-      - ../sql/wgcloud.sql:/docker-entrypoint-initdb.d/wgcloud.sql
+      - /data/wgcloud/sql/wgcloud.sql:/docker-entrypoint-initdb.d/wgcloud.sql
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping"]
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-p123456"]
       interval: 10s
       timeout: 5s
       retries: 5
