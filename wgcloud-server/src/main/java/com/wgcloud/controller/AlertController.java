@@ -142,7 +142,9 @@ public class AlertController {
                     feishuConfigService.updateById(feishuConfig);
                 }
                 StaticKeys.feishuConfig = feishuConfig;
-                FeishuSender.send(feishuConfig, "WGCLOUD测试", "这是一条测试消息");
+                if (!FeishuSender.send(feishuConfig, "WGCLOUD测试", "这是一条测试消息")) {
+                    result = "error";
+                }
             } else if ("dingtalk".equals(type)) {
                 if (StringUtils.isEmpty(dingtalkConfig.getId())) {
                     dingtalkConfigService.save(dingtalkConfig);
@@ -150,7 +152,9 @@ public class AlertController {
                     dingtalkConfigService.updateById(dingtalkConfig);
                 }
                 StaticKeys.dingtalkConfig = dingtalkConfig;
-                DingtalkSender.send(dingtalkConfig, "WGCLOUD测试", "这是一条测试消息");
+                if (!DingtalkSender.send(dingtalkConfig, "WGCLOUD测试", "这是一条测试消息")) {
+                    result = "error";
+                }
             }
         } catch (Exception e) {
             logger.error("测试告警设置错误", e);

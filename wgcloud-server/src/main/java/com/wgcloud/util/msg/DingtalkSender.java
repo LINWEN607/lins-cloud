@@ -16,7 +16,7 @@ public class DingtalkSender {
 
     private static final Logger logger = LoggerFactory.getLogger(DingtalkSender.class);
 
-    public static void send(DingtalkConfig config, String title, String content) {
+    public static boolean send(DingtalkConfig config, String title, String content) {
         try {
             String text = "[WGCLOUD] " + title + "\n" + content;
             String body = "{\"msgtype\":\"text\",\"text\":{\"content\":\"" + escapeJson(text) + "\"}}";
@@ -25,7 +25,7 @@ public class DingtalkSender {
             if (config.getSecret() != null && !config.getSecret().isEmpty()) {
                 long timestamp = System.currentTimeMillis();
                 String sign = genSign(config.getSecret(), timestamp);
-                body = "{\"msgtype\":\"text\",\"text\":{\"content\":\"" + escapeJson(text) + "\"},\"timestamp\":\"" + timestamp + "\",\"sign\":\"" + sign + "\"}";
+                urlStr = urlStr + "&timestamp=" + timestamp + "&sign=" + sign;
             }
 
             URL url = new URL(urlStr);
@@ -37,17 +37,22 @@ public class DingtalkSender {
                 os.write(body.getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
-            logger.debug("钉钉告警发送结果: {}", code);
+            if (code != 200) {
+                logger.error("钉钉告警发送失败, HTTP状态码: {}", code);
+                return false;
+            }
+            return true;
         } catch (Exception e) {
             logger.error("发送钉钉告警失败", e);
+            return false;
         }
     }
 
     private static String genSign(String secret, long timestamp) throws Exception {
         String stringToSign = timestamp + "\n" + secret;
         Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(stringToSign.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] signData = mac.doFinal();
+        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] signData = mac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(signData);
     }
 

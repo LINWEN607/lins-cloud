@@ -16,37 +16,45 @@ public class FeishuSender {
 
     private static final Logger logger = LoggerFactory.getLogger(FeishuSender.class);
 
-    public static void send(FeishuConfig config, String title, String content) {
+    public static boolean send(FeishuConfig config, String title, String content) {
         try {
-            String body = "{\"msg_type\":\"text\",\"content\":{\"text\":\"[WGCLOUD] " + escapeJson(title) + "\\n" + escapeJson(content) + "\"}}";
+            String text = "[WGCLOUD] " + title + "\n" + content;
+            StringBuilder body = new StringBuilder();
+            body.append("{\"msg_type\":\"text\",\"content\":{\"text\":\"").append(escapeJson(text)).append("\"");
 
-            String urlStr = config.getWebhookUrl();
             if (config.getSecret() != null && !config.getSecret().isEmpty()) {
                 long timestamp = System.currentTimeMillis() / 1000;
                 String sign = genSign(config.getSecret(), timestamp);
-                body = "{\"msg_type\":\"text\",\"content\":{\"text\":\"[WGCLOUD] " + escapeJson(title) + "\\n" + escapeJson(content) + "\"},\"timestamp\":\"" + timestamp + "\",\"sign\":\"" + sign + "\"}";
+                body.append("},\"timestamp\":\"").append(timestamp).append("\",\"sign\":\"").append(sign).append("\"}");
+            } else {
+                body.append("}}");
             }
 
-            URL url = new URL(urlStr);
+            URL url = new URL(config.getWebhookUrl());
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             try (OutputStream os = conn.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.UTF_8));
+                os.write(body.toString().getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
-            logger.debug("飞书告警发送结果: {}", code);
+            if (code != 200) {
+                logger.error("飞书告警发送失败, HTTP状态码: {}", code);
+                return false;
+            }
+            return true;
         } catch (Exception e) {
             logger.error("发送飞书告警失败", e);
+            return false;
         }
     }
 
     private static String genSign(String secret, long timestamp) throws Exception {
         String stringToSign = timestamp + "\n" + secret;
         Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(stringToSign.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] signData = mac.doFinal();
+        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        byte[] signData = mac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(signData);
     }
 
