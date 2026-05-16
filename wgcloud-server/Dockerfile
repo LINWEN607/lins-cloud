@@ -1,4 +1,5 @@
 FROM maven:3.8-openjdk-8-slim AS builder
+COPY settings.xml /usr/share/maven/conf/settings.xml
 WORKDIR /build
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
