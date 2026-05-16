@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  agent:
+    image: wgcloud-agent:latest
+    privileged: true
+    network_mode: "host"
+    environment:
+      - base.serverUrl=http://192.168.1.100:9999
+      - base.bindIp=192.168.1.101
+      - base.wgToken=wgcloud
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc:/host/etc:ro
+      - /data/wgcloud/agent/logs:/app/log
+
+
