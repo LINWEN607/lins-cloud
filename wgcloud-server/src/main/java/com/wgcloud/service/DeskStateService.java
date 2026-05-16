@@ -10,8 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @version v2.3
@@ -59,7 +58,15 @@ public class DeskStateService {
     }
 
     public List<DeskState> selectAllByParams(Map<String, Object> params) throws Exception {
-        return deskStateMapper.selectAllByParams(params);
+        List<DeskState> list = deskStateMapper.selectAllByParams(params);
+        Map<String, DeskState> uniqueMap = new LinkedHashMap<String, DeskState>();
+        for (DeskState ds : list) {
+            String key = ds.getHostname() + "_" + ds.getFileSystem();
+            if (!uniqueMap.containsKey(key)) {
+                uniqueMap.put(key, ds);
+            }
+        }
+        return new ArrayList<DeskState>(uniqueMap.values());
     }
 
     public int deleteByAccHname(Map<String, Object> params) throws Exception {
