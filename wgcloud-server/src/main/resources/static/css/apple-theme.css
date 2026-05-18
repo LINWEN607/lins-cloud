@@ -592,6 +592,11 @@ body.login-page {
     box-shadow: 0 0 0 3px rgba(10,132,255,0.2) !important;
 }
 
+.login-page .form-control::placeholder {
+    color: #8e8e93 !important;
+    opacity: 1;
+}
+
 .login-page .btn-primary {
     border-radius: 25px !important;
     padding: 12px !important;
@@ -842,5 +847,37 @@ body.login-page {
 .dark-mode .alert {
     background: #3a3a3c !important;
     color: #f5f5f7 !important;
+}
+
+/* General dark mode text brightness */
+.dark-mode,
+.dark-mode .card-body,
+.dark-mode .tab-content,
+.dark-mode .info-box-text,
+.dark-mode .info-box-number {
+    color: #e5e5ea !important;
+}
+.dark-mode .table td,
+.dark-mode .table td a {
+    color: #d1d1d6 !important;
+}
+.dark-mode .table thead th {
+    color: #a0a0a8 !important;
+}
+.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link {
+    color: #b0b0b8 !important;
+}
+.dark-mode .breadcrumb-item,
+.dark-mode .breadcrumb-item a {
+    color: #b0b0b8 !important;
+}
+.dark-mode .page-link {
+    color: #b0b0b8 !important;
+}
+.dark-mode .small-box .small-box-footer {
+    color: #b0b0b8 !important;
+}
+.dark-mode .card-title {
+    color: #f0f0f5 !important;
 }
 
