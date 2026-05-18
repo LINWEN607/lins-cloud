@@ -49,8 +49,6 @@ base:
   admindPwd: 111111
   #通信token，agent端和此保持一致
   wgToken: wgcloud
-  #是否开启看板编辑，yes开启，no关闭，看板编辑页面无需登陆
-  dashView: yes
   #数据表监控间隔,单位毫秒，默认60分钟
   dbTableTimes: 3600000
   #服务接口监控间隔，单位毫秒，默认10分钟
@@ -74,3 +72,5 @@ mail:
   appDownWarnMail: yes
   #服务接口告警邮件开关，yes开启，no关闭
   heathWarnMail: yes
+  #容器下线告警邮件开关，yes开启，no关闭
+  containerDownWarnMail: yes

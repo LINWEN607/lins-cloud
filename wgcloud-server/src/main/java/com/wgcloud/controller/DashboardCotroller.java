@@ -189,11 +189,7 @@ public class DashboardCotroller {
             logger.error("主面板信息异常：", e);
             logInfoService.save("dash/main", "主面板信息错误：" + e.toString(), StaticKeys.LOG_ERROR);
         }
-        if (request.getParameter(StaticKeys.DASH_VIEW_ACCOUNT) != null) {
-            return "dashView/index";
-        } else {
-            return "index";
-        }
+        return "index";
     }
 
     /**
@@ -207,10 +203,6 @@ public class DashboardCotroller {
     public String systemInfoList(SystemInfo systemInfo, Model model, HttpServletRequest request) {
         Map<String, Object> params = new HashMap<String, Object>();
         try {
-            StringBuffer url = new StringBuffer();
-            if (request.getParameter(StaticKeys.DASH_VIEW_ACCOUNT) != null) {
-                url.append("&dashView=1");
-            }
             PageInfo<SystemInfo> pageInfo = systemInfoService.selectByParams(params, systemInfo.getPage(), systemInfo.getPageSize());
 
             //设置磁盘总使用率 begin
@@ -237,17 +229,13 @@ public class DashboardCotroller {
             //设置磁盘总使用率 end
 
             PageUtil.initPageNumber(pageInfo, model);
-            model.addAttribute("pageUrl", "/dash/systemInfoList?1=1" + url.toString());
+            model.addAttribute("pageUrl", "/dash/systemInfoList?1=1");
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询服务器列表错误：", e);
             logInfoService.save("查询服务器列表错误", e.toString(), StaticKeys.LOG_ERROR);
         }
-        if (request.getParameter(StaticKeys.DASH_VIEW_ACCOUNT) != null) {
-            return "dashView/list";
-        } else {
-            return "host/list";
-        }
+        return "host/list";
     }
 
 
@@ -278,12 +266,7 @@ public class DashboardCotroller {
             logger.error("服务器详细信息错误：", e);
             logInfoService.save(hostname, "查看服务器详细信息错误", e.toString());
         }
-        if (request.getParameter(StaticKeys.DASH_VIEW_ACCOUNT) != null) {
-            return "dashView/view";
-        } else {
-            return "host/view";
-        }
-
+        return "host/view";
     }
 
     /**
@@ -364,11 +347,7 @@ public class DashboardCotroller {
             logger.error("服务器图形报表错误：", e);
             logInfoService.save(hostname, "图形报表错误", e.toString());
         }
-        if (request.getParameter(StaticKeys.DASH_VIEW_ACCOUNT) != null) {
-            return "dashView/viewChart";
-        } else {
-            return "host/viewChart";
-        }
+        return "host/viewChart";
     }
 
 

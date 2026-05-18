@@ -223,14 +223,6 @@
                 </li>
 
 
-                <li class="nav-item">
-                    <a target="_blank" th:href="@{'/dash/main?dashView=1'}" title="请确认配置文件已开启看板编辑" class="nav-link">
-                        <i class="nav-icon fas fa-th"></i>
-                        <p>看板编辑</p>
-                    </a>
-                </li>
-
-
                 <th:block th:if="${#strings.startsWith(session.menuActive,'6')}">
                     <li class="nav-item has-treeview menu-open">
                         <a  href="javascript:void(0);" class="nav-link active">

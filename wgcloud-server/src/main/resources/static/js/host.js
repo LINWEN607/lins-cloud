@@ -3,18 +3,6 @@ function searchByPara() {
     window.location.href = "/lins/log/list?account=" + escape(escape(account));
 }
 
-function viewDashView(id) {
-    window.location.href = "/lins/dash/detail?dashView=1&id=" + id;
-}
-
-function viewChartDashView(id) {
-    window.location.href = "/lins/dash/chart?dashView=1&id=" + id;
-}
-
-function viewDatetDashView(id, dates) {
-    window.location.href = "/lins/dash/chart?dashView=1&id=" + id + "&date=" + dates;
-}
-
 function view(id) {
     window.location.href = "/lins/dash/detail?id=" + id;
 }

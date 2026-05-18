@@ -83,6 +83,10 @@ public class ScheduledTask {
     @Autowired
     HeathMonitorService heathMonitorService;
     @Autowired
+    private ContainerInfoService containerInfoService;
+    @Autowired
+    private ContainerStateService containerStateService;
+    @Autowired
     private RestUtil restUtil;
     @Autowired
     ConnectionUtil connectionUtil;
@@ -215,6 +219,56 @@ public class ScheduledTask {
             logger.error("检测进程是否下线错误", e);
         }
 
+        try {
+            Map<String, Object> params = new HashMap<String, Object>();
+            List<ContainerInfo> list = containerInfoService.selectAllByParams(params);
+            if (!CollectionUtil.isEmpty(list)) {
+                List<ContainerInfo> updateList = new ArrayList<ContainerInfo>();
+                List<LogInfo> logInfoList = new ArrayList<LogInfo>();
+                for (ContainerInfo containerInfo : list) {
+                    Map<String, Object> stateParams = new HashMap<String, Object>();
+                    stateParams.put("hostname", containerInfo.getHostname());
+                    stateParams.put("containerName", containerInfo.getContainerName());
+                    List<ContainerState> stateList = containerStateService.selectAllByParams(stateParams);
+                    if (!CollectionUtil.isEmpty(stateList)) {
+                        ContainerState latest = stateList.get(0);
+                        Date createTime = latest.getCreateTime();
+                        long diff = date.getTime() - createTime.getTime();
+                        if (diff > delayTime) {
+                            if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
+                                continue;
+                            }
+                            containerInfo.setState(StaticKeys.DOWN_STATE);
+                            LogInfo logInfo = new LogInfo();
+                            logInfo.setHostname("容器下线：" + containerInfo.getHostname());
+                            logInfo.setInfoContent("超过10分钟未上报状态，可能已下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName());
+                            logInfo.setState(StaticKeys.LOG_ERROR);
+                            logInfoList.add(logInfo);
+                            updateList.add(containerInfo);
+                            Runnable runnable = () -> {
+                                WarnMailUtil.sendContainerDown(containerInfo, true);
+                            };
+                            executor.execute(runnable);
+                        } else {
+                            if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
+                                Runnable runnable = () -> {
+                                    WarnMailUtil.sendContainerDown(containerInfo, false);
+                                };
+                                executor.execute(runnable);
+                            }
+                        }
+                    }
+                }
+                if (updateList.size() > 0) {
+                    containerInfoService.updateRecord(updateList);
+                }
+                if (logInfoList.size() > 0) {
+                    logInfoService.saveRecord(logInfoList);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("检测容器是否下线错误", e);
+        }
 
     }
 

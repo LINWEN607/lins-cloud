@@ -33,9 +33,6 @@ public class StaticKeys {
     //session存贮登录信息的标识
     public static String LOGIN_KEY = "LOGIN_KEY";
 
-    public static String DASH_VIEW_ACCOUNT = "dashView";
-
-
     //日志失败标记
     public static final String LOG_ERROR = "1";
 

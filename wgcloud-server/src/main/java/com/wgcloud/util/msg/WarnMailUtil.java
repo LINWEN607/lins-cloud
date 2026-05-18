@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @version v2.3
@@ -25,10 +27,26 @@ public class WarnMailUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(WarnMailUtil.class);
 
-    public static final String content_suffix = "<p><a target='_blank' href='http://www.wgstart.com'>WGCLOUD</a>敬上";
+    public static final String content_suffix = "";
+
+    public static Map<String, String> runtimeConfig = new ConcurrentHashMap<>();
 
     private static LogInfoService logInfoService = (LogInfoService) ApplicationContextHelper.getBean(LogInfoService.class);
     private static MailConfig mailConfig = (MailConfig) ApplicationContextHelper.getBean(MailConfig.class);
+
+    private static String getConfig(String key) {
+        String val = runtimeConfig.get(key);
+        return val != null ? val : null;
+    }
+
+    private static boolean isAlertEnabled(String runtimeKey, java.util.function.Supplier<String> fallback) {
+        String allVal = runtimeConfig.get("allWarnMail");
+        if (allVal != null && StaticKeys.NO_SEND_WARN.equals(allVal)) return false;
+        String specificVal = runtimeConfig.get(runtimeKey);
+        if (specificVal != null) return !StaticKeys.NO_SEND_WARN.equals(specificVal);
+        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail())) return false;
+        return !StaticKeys.NO_SEND_WARN.equals(fallback.get());
+    }
 
     private static void sendToAllChannels(String title, String content) {
         if (StaticKeys.mailSet != null) {
@@ -51,7 +69,7 @@ public class WarnMailUtil {
      * @return
      */
     public static boolean sendWarnInfo(MemState memState) {
-        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail()) || StaticKeys.NO_SEND_WARN.equals(mailConfig.getMemWarnMail())) {
+        if (!isAlertEnabled("memWarnMail", mailConfig::getMemWarnMail)) {
             return false;
         }
         String key = memState.getHostname();
@@ -82,7 +100,7 @@ public class WarnMailUtil {
      * @return
      */
     public static boolean sendCpuWarnInfo(CpuState cpuState) {
-        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail()) || StaticKeys.NO_SEND_WARN.equals(mailConfig.getCpuWarnMail())) {
+        if (!isAlertEnabled("cpuWarnMail", mailConfig::getCpuWarnMail)) {
             return false;
         }
         String key = cpuState.getHostname();
@@ -114,7 +132,7 @@ public class WarnMailUtil {
      * @return
      */
     public static boolean sendHeathInfo(HeathMonitor heathMonitor, boolean isDown) {
-        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail()) || StaticKeys.NO_SEND_WARN.equals(mailConfig.getHeathWarnMail())) {
+        if (!isAlertEnabled("heathWarnMail", mailConfig::getHeathWarnMail)) {
             return false;
         }
         String key = heathMonitor.getId();
@@ -155,7 +173,7 @@ public class WarnMailUtil {
      * @return
      */
     public static boolean sendHostDown(SystemInfo systemInfo, boolean isDown) {
-        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail()) || StaticKeys.NO_SEND_WARN.equals(mailConfig.getHostDownWarnMail())) {
+        if (!isAlertEnabled("hostDownWarnMail", mailConfig::getHostDownWarnMail)) {
             return false;
         }
         String key = systemInfo.getId();
@@ -198,7 +216,7 @@ public class WarnMailUtil {
      * @return
      */
     public static boolean sendAppDown(AppInfo appInfo, boolean isDown) {
-        if (StaticKeys.NO_SEND_WARN.equals(mailConfig.getAllWarnMail()) || StaticKeys.NO_SEND_WARN.equals(mailConfig.getAppDownWarnMail())) {
+        if (!isAlertEnabled("appDownWarnMail", mailConfig::getAppDownWarnMail)) {
             return false;
         }
         String key = appInfo.getId();
@@ -232,6 +250,47 @@ public class WarnMailUtil {
         return false;
     }
 
+    /**
+     * 容器下线发送告警
+     *
+     * @param containerInfo 容器信息
+     * @param isDown        是否是下线告警，true下线告警，false上线恢复
+     * @return
+     */
+    public static boolean sendContainerDown(ContainerInfo containerInfo, boolean isDown) {
+        if (!isAlertEnabled("containerDownWarnMail", mailConfig::getContainerDownWarnMail)) {
+            return false;
+        }
+        String key = containerInfo.getId();
+        if (isDown) {
+            if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(key))) {
+                return false;
+            }
+            try {
+                String title = "容器下线告警：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+                String commContent = "容器已经超过10分钟未上报数据，可能已经下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+                sendToAllChannels(title, commContent);
+                WarnPools.MEM_WARN_MAP.put(key, "1");
+                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            } catch (Exception e) {
+                logger.error("发送容器下线告警失败：", e);
+                logInfoService.save("发送容器下线告警错误", e.toString(), StaticKeys.LOG_ERROR);
+            }
+        } else {
+            WarnPools.MEM_WARN_MAP.remove(key);
+            try {
+                String title = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+                String commContent = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+                sendToAllChannels(title, commContent);
+                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            } catch (Exception e) {
+                logger.error("发送容器恢复上线通知失败：", e);
+                logInfoService.save("发送容器恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
+            }
+        }
+        return false;
+    }
+
     public static String sendMail(String mails, String mailTitle, String mailContent) {
         try {
             HtmlEmail email = new HtmlEmail();
@@ -242,7 +301,7 @@ public class WarnMailUtil {
             }
             email.setAuthenticator(new DefaultAuthenticator(StaticKeys.mailSet.getFromMailName(), StaticKeys.mailSet.getFromPwd()));
             email.setFrom(StaticKeys.mailSet.getFromMailName());//发信者
-            email.setSubject("[WGCLOUD] " + mailTitle);//标题
+            email.setSubject("[LINS] " + mailTitle);//标题
             email.setCharset("UTF-8");//编码格式
             email.setHtmlMsg(mailContent + content_suffix);//内容
             email.addTo(mails.split(";"));

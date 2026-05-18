@@ -7,6 +7,7 @@ import com.wgcloud.service.DingtalkConfigService;
 import com.wgcloud.service.FeishuConfigService;
 import com.wgcloud.service.LogInfoService;
 import com.wgcloud.service.MailSetService;
+import com.wgcloud.service.SystemConfigService;
 import com.wgcloud.util.msg.DingtalkSender;
 import com.wgcloud.util.msg.FeishuSender;
 import com.wgcloud.util.msg.WarnMailUtil;
@@ -39,6 +40,10 @@ public class AlertController {
     private DingtalkConfigService dingtalkConfigService;
     @Resource
     private LogInfoService logInfoService;
+    @Resource
+    private SystemConfigService systemConfigService;
+    @Resource
+    private com.wgcloud.config.MailConfig mailConfig;
 
     @RequestMapping(value = "list")
     public String list(Model model, HttpServletRequest request) {
@@ -56,6 +61,15 @@ public class AlertController {
             if (dingtalkList.size() > 0) {
                 model.addAttribute("dingtalkConfig", dingtalkList.get(0));
             }
+            model.addAttribute("allWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("allWarnMail", mailConfig.getAllWarnMail()));
+            model.addAttribute("memWarnVal", WarnMailUtil.runtimeConfig.getOrDefault("memWarnVal", String.valueOf(mailConfig.getMemWarnVal().intValue())));
+            model.addAttribute("cpuWarnVal", WarnMailUtil.runtimeConfig.getOrDefault("cpuWarnVal", String.valueOf(mailConfig.getCpuWarnVal().intValue())));
+            model.addAttribute("memWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("memWarnMail", mailConfig.getMemWarnMail()));
+            model.addAttribute("cpuWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("cpuWarnMail", mailConfig.getCpuWarnMail()));
+            model.addAttribute("hostDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("hostDownWarnMail", mailConfig.getHostDownWarnMail()));
+            model.addAttribute("appDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("appDownWarnMail", mailConfig.getAppDownWarnMail()));
+            model.addAttribute("heathWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("heathWarnMail", mailConfig.getHeathWarnMail()));
+            model.addAttribute("containerDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("containerDownWarnMail", mailConfig.getContainerDownWarnMail()));
         } catch (Exception e) {
             logger.error("查询告警设置错误", e);
             logInfoService.save("查询告警设置错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -134,7 +148,7 @@ public class AlertController {
                     mailSetService.updateById(mailSet);
                 }
                 StaticKeys.mailSet = mailSet;
-                result = WarnMailUtil.sendMail(mailSet.getToMail(), "WGCLOUD测试邮件发送", "WGCLOUD测试邮件发送");
+                result = WarnMailUtil.sendMail(mailSet.getToMail(), "LINS测试邮件发送", "LINS测试邮件发送");
             } else if ("feishu".equals(type)) {
                 if (StringUtils.isEmpty(feishuConfig.getId())) {
                     feishuConfigService.save(feishuConfig);
@@ -142,7 +156,7 @@ public class AlertController {
                     feishuConfigService.updateById(feishuConfig);
                 }
                 StaticKeys.feishuConfig = feishuConfig;
-                if (!FeishuSender.send(feishuConfig, "WGCLOUD测试", "这是一条测试消息")) {
+                if (!FeishuSender.send(feishuConfig, "LINS测试", "这是一条测试消息")) {
                     result = "error";
                 }
             } else if ("dingtalk".equals(type)) {
@@ -152,7 +166,7 @@ public class AlertController {
                     dingtalkConfigService.updateById(dingtalkConfig);
                 }
                 StaticKeys.dingtalkConfig = dingtalkConfig;
-                if (!DingtalkSender.send(dingtalkConfig, "WGCLOUD测试", "这是一条测试消息")) {
+                if (!DingtalkSender.send(dingtalkConfig, "LINS测试", "这是一条测试消息")) {
                     result = "error";
                 }
             }
@@ -162,5 +176,34 @@ public class AlertController {
             result = "error";
         }
         return "redirect:/alert/list?msg=test&result=" + result + "&tab=" + type;
+    }
+
+    @RequestMapping(value = "saveConfig")
+    public String saveConfig(HttpServletRequest request) {
+        try {
+            saveConfigVal("allWarnMail", request.getParameter("allWarnMail"));
+            saveConfigVal("memWarnVal", request.getParameter("memWarnVal"));
+            saveConfigVal("cpuWarnVal", request.getParameter("cpuWarnVal"));
+            saveConfigVal("memWarnMail", request.getParameter("memWarnMail"));
+            saveConfigVal("cpuWarnMail", request.getParameter("cpuWarnMail"));
+            saveConfigVal("hostDownWarnMail", request.getParameter("hostDownWarnMail"));
+            saveConfigVal("appDownWarnMail", request.getParameter("appDownWarnMail"));
+            saveConfigVal("heathWarnMail", request.getParameter("heathWarnMail"));
+            saveConfigVal("containerDownWarnMail", request.getParameter("containerDownWarnMail"));
+        } catch (Exception e) {
+            logger.error("保存告警配置错误", e);
+            logInfoService.save("保存告警配置错误", e.toString(), StaticKeys.LOG_ERROR);
+        }
+        return "redirect:/alert/list?msg=save&tab=config";
+    }
+
+    private void saveConfigVal(String key, String value) {
+        if (StringUtils.isEmpty(value)) return;
+        try {
+            systemConfigService.setVal(key, value);
+            WarnMailUtil.runtimeConfig.put(key, value);
+        } catch (Exception e) {
+            logger.error("保存配置项失败，key={}", key, e);
+        }
     }
 }

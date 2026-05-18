@@ -19,6 +19,7 @@ public class MailConfig {
     private String hostDownWarnMail;
     private String appDownWarnMail;
     private String heathWarnMail;
+    private String containerDownWarnMail;
     private String allWarnMail;
 
 
@@ -97,6 +98,17 @@ public class MailConfig {
 
     public void setHeathWarnMail(String heathWarnMail) {
         this.heathWarnMail = heathWarnMail;
+    }
+
+    public String getContainerDownWarnMail() {
+        if (StringUtils.isEmpty(containerDownWarnMail)) {
+            return "true";
+        }
+        return containerDownWarnMail;
+    }
+
+    public void setContainerDownWarnMail(String containerDownWarnMail) {
+        this.containerDownWarnMail = containerDownWarnMail;
     }
 
     public String getAllWarnMail() {

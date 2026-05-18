@@ -15,7 +15,6 @@ public class CommonConfig {
     //admin管理员密码
     private String admindPwd = "111111";
     private String wgToken = "";
-    private String dashView;
     private Integer dbTableTimes = 3600000;
     private Integer heathTimes = 600000;
 
@@ -36,17 +35,6 @@ public class CommonConfig {
         this.wgToken = wgToken;
     }
 
-
-    public String getDashView() {
-        if (StringUtils.isEmpty(dashView)) {
-            return "true";
-        }
-        return dashView;
-    }
-
-    public void setDashView(String dashView) {
-        this.dashView = dashView;
-    }
 
     public Integer getDbTableTimes() {
         if (dbTableTimes == null) {
