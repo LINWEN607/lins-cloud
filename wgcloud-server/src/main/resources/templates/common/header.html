@@ -32,21 +32,4 @@
 <link rel="shortcut icon" type="image/x-icon" th:href="@{'/static/logincss/favicon.png'}"/>
 <style>#adsShowInfoSpanHeader{display:none!important}</style>
 <script>new MutationObserver(function(){var e=document.getElementById('adsShowInfoSpanHeader');if(e)e.remove()}).observe(document.documentElement,{childList:!0,subtree:!0});</script>
-<script>if('false'!==localStorage.getItem('dark-mode')){document.documentElement.classList.add('dark-mode');document.documentElement.style.colorScheme='dark'}</script>
-<script>
-function toggleTheme(){
-  var b=document.body.classList.toggle('dark-mode');
-  document.documentElement.classList.toggle('dark-mode',b);
-  document.documentElement.style.colorScheme=b?'dark':'light';
-  localStorage.setItem('dark-mode',b?'true':'false')
-}
-document.addEventListener('DOMContentLoaded',function(){
-  if('false'===localStorage.getItem('dark-mode')){
-    document.body.classList.remove('dark-mode');
-    document.documentElement.classList.remove('dark-mode');
-    document.documentElement.style.colorScheme='light'
-  }else if(!document.body.classList.contains('dark-mode')){
-    document.body.classList.add('dark-mode')
-  }
-});
-</script>
+<script>document.documentElement.classList.add('dark-mode');document.documentElement.style.colorScheme='dark'</script>

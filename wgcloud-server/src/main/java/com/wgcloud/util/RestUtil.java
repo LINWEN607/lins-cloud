@@ -52,10 +52,10 @@ public class RestUtil {
             ResponseEntity<String> responseEntity = restTemplate.getForEntity(url, String.class);
             return responseEntity.getStatusCodeValue();
         } catch (HttpClientErrorException e) {
-            logger.error("服务接口检测任务错误", e);
+            logger.error("服务探活任务错误", e);
             return e.getRawStatusCode();
         } catch (Exception e) {
-            logger.error("服务接口检测任务错误", e);
+            logger.error("服务探活任务错误", e);
             return 500;
         }
     }
