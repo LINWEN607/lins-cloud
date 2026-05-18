@@ -5,6 +5,8 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.wgcloud.entity.*;
+import com.wgcloud.service.ContainerInfoService;
+import com.wgcloud.service.ContainerStateService;
 import com.wgcloud.service.LogInfoService;
 import com.wgcloud.service.SystemInfoService;
 import com.wgcloud.util.TokenUtils;
@@ -46,6 +48,10 @@ public class AgentController {
     private LogInfoService logInfoService;
     @Resource
     private SystemInfoService systemInfoService;
+    @Resource
+    private ContainerStateService containerStateService;
+    @Resource
+    private ContainerInfoService containerInfoService;
     @Autowired
     private TokenUtils tokenUtils;
 
@@ -68,6 +74,7 @@ public class AgentController {
         JSONObject systemInfo = agentJsonObject.getJSONObject("systemInfo");
         JSONObject netIoState = agentJsonObject.getJSONObject("netIoState");
         JSONArray deskStateList = agentJsonObject.getJSONArray("deskStateList");
+        JSONArray containerStateList = agentJsonObject.getJSONArray("containerStateList");
 
         try {
 
@@ -125,6 +132,18 @@ public class AgentController {
                     DeskState bean = new DeskState();
                     BeanUtil.copyProperties(jsonObjects, bean);
                     BatchData.DESK_STATE_LIST.add(bean);
+                }
+            }
+            if (containerStateList != null) {
+                java.util.List<ContainerState> containerStateResList = JSONUtil.toList(containerStateList, ContainerState.class);
+                for (ContainerState cs : containerStateResList) {
+                    cs.setId(com.wgcloud.util.UUIDUtil.getUUID());
+                    cs.setCreateTime(new java.util.Date());
+                    try {
+                        containerStateService.save(cs);
+                    } catch (Exception e) {
+                        logger.error("保存容器状态错误", e);
+                    }
                 }
             }
             resultJson.put("result", "success");

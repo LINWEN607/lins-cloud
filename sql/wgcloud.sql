@@ -331,3 +331,32 @@ CREATE TABLE `SYSTEM_CONFIG` (
   `CONFIG_VALUE` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`CONFIG_KEY`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for container_info
+-- ----------------------------
+DROP TABLE IF EXISTS `CONTAINER_INFO`;
+CREATE TABLE `CONTAINER_INFO` (
+  `ID` char(32) NOT NULL,
+  `HOSTNAME` char(50) DEFAULT NULL,
+  `CONTAINER_NAME` char(100) DEFAULT NULL,
+  `STATE` char(1) DEFAULT '2',
+  `CREATE_TIME` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for container_state
+-- ----------------------------
+DROP TABLE IF EXISTS `CONTAINER_STATE`;
+CREATE TABLE `CONTAINER_STATE` (
+  `ID` char(32) NOT NULL,
+  `HOSTNAME` char(50) DEFAULT NULL,
+  `CONTAINER_NAME` char(100) DEFAULT NULL,
+  `CPU_PER` double(8,2) DEFAULT NULL,
+  `MEM_PER` double(10,2) DEFAULT NULL,
+  `MEM_USAGE` char(100) DEFAULT NULL,
+  `CREATE_TIME` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `CONTAINER_STATE_INDEX` (`HOSTNAME`,`CONTAINER_NAME`,`CREATE_TIME`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

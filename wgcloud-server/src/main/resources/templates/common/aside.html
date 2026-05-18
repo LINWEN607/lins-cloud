@@ -70,11 +70,22 @@
                             <th:block th:unless="${session.menuActive eq '13'}">
                                 <a th:href="@{'/appInfo/list'}" class="nav-link">
                             </th:block>
-                                <i class="fas fa-tasks nav-icon"></i>
-                                <p>进程管理</p>
-                            </a>
-                        </li>
-                    </ul>
+                        <i class="fas fa-tasks nav-icon"></i>
+                        <p>进程管理</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '14'}">
+                            <a th:href="@{'/containerInfo/list'}" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '14'}">
+                            <a th:href="@{'/containerInfo/list'}" class="nav-link">
+                        </th:block>
+                        <i class="fab fa-docker nav-icon"></i>
+                        <p>容器管理</p>
+                        </a>
+                    </li>
+                </ul>
                 </li>
 
 

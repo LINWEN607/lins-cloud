@@ -91,6 +91,10 @@ public class AuthRestFilter implements Filter {
             session.setAttribute("menuActive", "13");
             return;
         }
+        if (uri.indexOf("/containerInfo") > -1) {
+            session.setAttribute("menuActive", "14");
+            return;
+        }
         if (uri.indexOf("/mailset") > -1 || uri.indexOf("/alert") > -1) {
             session.setAttribute("menuActive", "31");
             return;

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,6 +140,38 @@ public class ScheduledTask {
                 }
                 jsonObject.put("appInfoList", appInfoResList);
                 jsonObject.put("appStateList", appStateResList);
+            }
+
+            // container state
+            try {
+                Process process = Runtime.getRuntime().exec("docker stats --no-stream --format \"{{json .}}\"");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                JSONArray containerStateList = new JSONArray();
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().length() > 0) {
+                        cn.hutool.json.JSONObject dockerJson = JSONUtil.parseObj(line);
+                        JSONObject cs = new JSONObject();
+                        cs.put("hostname", commonConfig.getBindIp());
+                        cs.put("containerName", dockerJson.getStr("Name"));
+                        String cpuStr = dockerJson.getStr("CPUPerc");
+                        if (cpuStr != null) {
+                            cs.put("cpuPer", Double.parseDouble(cpuStr.replace("%", "")));
+                        }
+                        String memStr = dockerJson.getStr("MemPerc");
+                        if (memStr != null) {
+                            cs.put("memPer", Double.parseDouble(memStr.replace("%", "")));
+                        }
+                        cs.put("memUsage", dockerJson.getStr("MemUsage"));
+                        containerStateList.add(cs);
+                    }
+                }
+                reader.close();
+                process.waitFor();
+                if (containerStateList.size() > 0) {
+                    jsonObject.put("containerStateList", containerStateList);
+                }
+            } catch (Exception ignored) {
             }
 
             logger.debug("---------------" + jsonObject.toString());

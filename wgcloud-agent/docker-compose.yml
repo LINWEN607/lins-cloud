@@ -15,4 +15,4 @@ services:
       - /etc:/host/etc:ro
       - /data/wgcloud/agent/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.pid:/var/run/docker.pid
+      - /var/run/docker.sock:/var/run/docker.sock
