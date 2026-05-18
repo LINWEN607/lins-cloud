@@ -14,6 +14,10 @@
 
 <link rel="shortcut icon" type="image/x-icon" th:href="@{'/static/logincss/favicon.png'}"/>
 <link rel="stylesheet" th:href="@{'/static/css/apple-theme.css'}">
+<script>if('false'!==localStorage.getItem('dark-mode')){document.documentElement.classList.add('dark-mode');document.documentElement.style.colorScheme='dark'}
+function toggleTheme(){var b=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode',b);document.documentElement.style.colorScheme=b?'dark':'light';localStorage.setItem('dark-mode',b?'true':'false')}
+document.addEventListener('DOMContentLoaded',function(){if('false'===localStorage.getItem('dark-mode')){document.body.classList.remove('dark-mode');document.documentElement.classList.remove('dark-mode');document.documentElement.style.colorScheme='light'}else if(!document.body.classList.contains('dark-mode')){document.body.classList.add('dark-mode')}});
+</script>
 		
 </head>
 <body class="login-page">

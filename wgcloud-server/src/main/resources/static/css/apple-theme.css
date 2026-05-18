@@ -563,230 +563,230 @@ body.login-page {
 /* ==========================================
    DARK MODE — macOS Dark
    ========================================== */
-body.dark-mode {
+.dark-mode {
     background-color: #1c1c1e !important;
 }
 
-body.dark-mode .content-wrapper {
+.dark-mode .content-wrapper {
     background-color: #1c1c1e !important;
 }
 
-body.dark-mode .main-header.navbar-white {
+.dark-mode .main-header.navbar-white {
     background: rgba(28,28,30,0.78) !important;
     border-bottom: 0.5px solid rgba(255,255,255,0.08) !important;
 }
 
-body.dark-mode .main-header .nav-link {
+.dark-mode .main-header .nav-link {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .main-sidebar {
+.dark-mode .main-sidebar {
     background: rgba(28,28,30,0.88) !important;
     border-right: 0.5px solid rgba(255,255,255,0.08) !important;
 }
 
-body.dark-mode .sidebar-dark-primary .brand-link {
+.dark-mode .sidebar-dark-primary .brand-link {
     border-bottom: 0.5px solid rgba(255,255,255,0.08) !important;
 }
 
-body.dark-mode .sidebar-dark-primary .brand-text {
+.dark-mode .sidebar-dark-primary .brand-text {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link {
+.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link {
     color: #98989d !important;
 }
 
-body.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link:hover {
+.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link:hover {
     background: rgba(255,255,255,0.06) !important;
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link.active {
+.dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link.active {
     background: rgba(0,122,255,0.2) !important;
     color: #0a84ff !important;
 }
 
-body.dark-mode .card {
+.dark-mode .card {
     background: #2c2c2e !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
 }
 
-body.dark-mode .card-header {
+.dark-mode .card-header {
     border-bottom: 0.5px solid rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .card-header .card-title {
+.dark-mode .card-header .card-title {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .card-footer {
+.dark-mode .card-footer {
     border-top: 0.5px solid rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .table thead th {
+.dark-mode .table thead th {
     border-bottom: 0.5px solid rgba(255,255,255,0.08) !important;
     color: #98989d !important;
 }
 
-body.dark-mode .table td {
+.dark-mode .table td {
     border-top: 0.5px solid rgba(255,255,255,0.04) !important;
 }
 
-body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
     background-color: rgba(255,255,255,0.03) !important;
 }
 
-body.dark-mode .table-hover tbody tr:hover {
+.dark-mode .table-hover tbody tr:hover {
     background-color: rgba(0,122,255,0.08) !important;
 }
 
-body.dark-mode .table-bordered {
+.dark-mode .table-bordered {
     border: 0.5px solid rgba(255,255,255,0.08) !important;
 }
 
-body.dark-mode .form-control {
+.dark-mode .form-control {
     background: #3a3a3c !important;
     border: 0.5px solid rgba(255,255,255,0.12) !important;
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .form-control:focus {
+.dark-mode .form-control:focus {
     border-color: #0a84ff !important;
     box-shadow: 0 0 0 3px rgba(10,132,255,0.2) !important;
 }
 
-body.dark-mode .dropdown-menu {
+.dark-mode .dropdown-menu {
     background: #2c2c2e !important;
     box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
 }
 
-body.dark-mode .dropdown-item {
+.dark-mode .dropdown-item {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .dropdown-item:hover {
+.dark-mode .dropdown-item:hover {
     background: rgba(10,132,255,0.12) !important;
     color: #0a84ff !important;
 }
 
-body.dark-mode .dropdown-divider {
+.dark-mode .dropdown-divider {
     border-color: rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .page-link {
+.dark-mode .page-link {
     color: #98989d !important;
 }
 
-body.dark-mode .page-link:hover {
+.dark-mode .page-link:hover {
     background: rgba(255,255,255,0.06) !important;
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .page-item.active .page-link {
+.dark-mode .page-item.active .page-link {
     background: #0a84ff !important;
 }
 
-body.dark-mode .modal-content {
+.dark-mode .modal-content {
     background: #2c2c2e !important;
     box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
 }
 
-body.dark-mode .modal-header {
+.dark-mode .modal-header {
     border-bottom: 0.5px solid rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .modal-footer {
+.dark-mode .modal-footer {
     border-top: 0.5px solid rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .progress {
+.dark-mode .progress {
     background-color: rgba(255,255,255,0.08) !important;
 }
 
-body.dark-mode .breadcrumb-item {
+.dark-mode .breadcrumb-item {
     color: #98989d !important;
 }
 
-body.dark-mode .select2-container--bootstrap4 .select2-selection {
+.dark-mode .select2-container--bootstrap4 .select2-selection {
     background: #3a3a3c !important;
     border: 0.5px solid rgba(255,255,255,0.12) !important;
 }
 
-body.dark-mode .select2-container--bootstrap4 .select2-dropdown {
+.dark-mode .select2-container--bootstrap4 .select2-dropdown {
     background: #2c2c2e !important;
 }
 
-body.dark-mode .select2-container--bootstrap4 .select2-results__option {
+.dark-mode .select2-container--bootstrap4 .select2-results__option {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .select2-container--bootstrap4 .select2-results__option--highlighted {
+.dark-mode .select2-container--bootstrap4 .select2-results__option--highlighted {
     background: rgba(10,132,255,0.12) !important;
     color: #0a84ff !important;
 }
 
-body.dark-mode .nav-tabs {
+.dark-mode .nav-tabs {
     border-bottom: 0.5px solid rgba(255,255,255,0.06) !important;
 }
 
-body.dark-mode .nav-tabs .nav-link {
+.dark-mode .nav-tabs .nav-link {
     color: #98989d !important;
 }
 
-body.dark-mode .nav-tabs .nav-link.active {
+.dark-mode .nav-tabs .nav-link.active {
     color: #0a84ff !important;
     border-bottom: 2px solid #0a84ff !important;
 }
 
-body.dark-mode .small-box {
+.dark-mode .small-box {
     box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
 }
 
-body.dark-mode .btn-secondary {
+.dark-mode .btn-secondary {
     background: #3a3a3c !important;
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .btn-secondary:hover {
+.dark-mode .btn-secondary:hover {
     background: #48484a !important;
 }
 
-body.dark-mode .toast {
+.dark-mode .toast {
     background: #2c2c2e !important;
 }
 
-body.dark-mode .alert {
+.dark-mode .alert {
     background: #3a3a3c !important;
     color: #f5f5f7 !important;
 }
 
 /* Dark mode login page */
-body.dark-mode.login-page {
+.dark-mode.login-page {
     background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%) !important;
 }
 
-body.dark-mode .login-page .login-box-content {
+.dark-mode .login-page .login-box-content {
     background: rgba(44,44,46,0.82) !important;
     border: 0.5px solid rgba(255,255,255,0.1);
     box-shadow: 0 8px 40px rgba(0,0,0,0.4) !important;
 }
 
-body.dark-mode .login-page .login-logo span {
+.dark-mode .login-page .login-logo span {
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .login-page .login-box-msg {
+.dark-mode .login-page .login-box-msg {
     color: #98989d !important;
 }
 
-body.dark-mode .login-page .form-control {
+.dark-mode .login-page .form-control {
     background: rgba(58,58,60,0.9) !important;
     border: 0.5px solid rgba(255,255,255,0.1) !important;
     color: #f5f5f7 !important;
 }
 
-body.dark-mode .login-page .form-control:focus {
+.dark-mode .login-page .form-control:focus {
     border-color: #0a84ff !important;
     box-shadow: 0 0 0 3px rgba(10,132,255,0.2) !important;
 }
