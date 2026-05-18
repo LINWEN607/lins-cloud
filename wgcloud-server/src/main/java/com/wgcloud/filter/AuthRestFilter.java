@@ -80,6 +80,10 @@ public class AuthRestFilter implements Filter {
             session.setAttribute("menuActive", "14");
             return;
         }
+        if (uri.indexOf("/alert/config") > -1) {
+            session.setAttribute("menuActive", "32");
+            return;
+        }
         if (uri.indexOf("/mailset") > -1 || uri.indexOf("/alert") > -1) {
             session.setAttribute("menuActive", "31");
             return;

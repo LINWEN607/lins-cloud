@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <div th:replace="common/header.html"></div>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div th:replace="common/chart.html"></div>
+
+<div class="wrapper">
+  <div th:replace="common/navbar.html"></div>
+  <div th:replace="common/aside.html"></div>
+
+  <div class="content-wrapper" style="font-size: 0.9rem">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1></h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item active"></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-10">
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">告警配置</h3>
+              </div>
+              <div class="card-body">
+                <form role="form" id="formConfig" method="post" th:action="@{'/alert/saveConfig'}">
+                  <div class="card-body">
+                    <div class="form-group">
+                      <label>总开关</label>
+                      <select class="form-control" name="allWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>内存告警阈值(%)</label>
+                      <input type="number" th:value="${memWarnVal}" autocomplete="off" class="form-control" name="memWarnVal" placeholder="98">
+                    </div>
+                    <div class="form-group">
+                      <label>CPU告警阈值(%)</label>
+                      <input type="number" th:value="${cpuWarnVal}" autocomplete="off" class="form-control" name="cpuWarnVal" placeholder="98">
+                    </div>
+                    <div class="form-group">
+                      <label>内存告警开关</label>
+                      <select class="form-control" name="memWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>CPU告警开关</label>
+                      <select class="form-control" name="cpuWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>主机下线告警开关</label>
+                      <select class="form-control" name="hostDownWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>进程下线告警开关</label>
+                      <select class="form-control" name="appDownWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>服务接口告警开关</label>
+                      <select class="form-control" name="heathWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>容器下线告警开关</label>
+                      <select class="form-control" name="containerDownWarnMail">
+                        <option value="yes">开启</option>
+                        <option value="false">关闭</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="card-footer">
+                    <button type="submit" class="btn btn-primary btn-sm">保存</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div th:replace="common/footer.html"></div>
+</div>
+
+<script th:inline="javascript">
+    $(document).ready(function(){
+        $("#formConfig [name='allWarnMail']").val([[${allWarnMail}]]);
+        $("#formConfig [name='memWarnMail']").val([[${memWarnMail}]]);
+        $("#formConfig [name='cpuWarnMail']").val([[${cpuWarnMail}]]);
+        $("#formConfig [name='hostDownWarnMail']").val([[${hostDownWarnMail}]]);
+        $("#formConfig [name='appDownWarnMail']").val([[${appDownWarnMail}]]);
+        $("#formConfig [name='heathWarnMail']").val([[${heathWarnMail}]]);
+        $("#formConfig [name='containerDownWarnMail']").val([[${containerDownWarnMail}]]);
+    });
+
+    toastr.options.timeOut = 15000;
+    var msg = [[${msg}]];
+    if(msg!=''){
+        if(msg.indexOf("测试发送失败")>-1){
+            toastr.error(msg);
+        }else{
+            toastr.success(msg);
+        }
+    }
+</script>
+</body>
+</html>

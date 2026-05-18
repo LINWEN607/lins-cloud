@@ -97,6 +97,26 @@ public class AlertController {
         return "alert/list";
     }
 
+    @RequestMapping(value = "config")
+    public String config(Model model, HttpServletRequest request) {
+        try {
+            model.addAttribute("allWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("allWarnMail", mailConfig.getAllWarnMail()));
+            model.addAttribute("memWarnVal", WarnMailUtil.runtimeConfig.getOrDefault("memWarnVal", String.valueOf(mailConfig.getMemWarnVal().intValue())));
+            model.addAttribute("cpuWarnVal", WarnMailUtil.runtimeConfig.getOrDefault("cpuWarnVal", String.valueOf(mailConfig.getCpuWarnVal().intValue())));
+            model.addAttribute("memWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("memWarnMail", mailConfig.getMemWarnMail()));
+            model.addAttribute("cpuWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("cpuWarnMail", mailConfig.getCpuWarnMail()));
+            model.addAttribute("hostDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("hostDownWarnMail", mailConfig.getHostDownWarnMail()));
+            model.addAttribute("appDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("appDownWarnMail", mailConfig.getAppDownWarnMail()));
+            model.addAttribute("heathWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("heathWarnMail", mailConfig.getHeathWarnMail()));
+            model.addAttribute("containerDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("containerDownWarnMail", mailConfig.getContainerDownWarnMail()));
+        } catch (Exception e) {
+            logger.error("查询告警配置错误", e);
+        }
+        String msg = request.getParameter("msg");
+        model.addAttribute("msg", msg != null ? "保存成功" : "");
+        return "alert/config";
+    }
+
     @RequestMapping(value = "save")
     public String save(@RequestParam(defaultValue = "email") String type,
                        MailSet mailSet,
