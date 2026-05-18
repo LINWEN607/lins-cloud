@@ -99,6 +99,9 @@ public class ContainerInfoController {
 
     @RequestMapping(value = "save")
     public String save(ContainerInfo containerInfo, Model model, HttpServletRequest request) {
+        if (StringUtils.isEmpty(containerInfo.getContainerName())) {
+            return "redirect:/containerInfo/list";
+        }
         try {
             if (StringUtils.isEmpty(containerInfo.getId())) {
                 containerInfoService.save(containerInfo);
@@ -137,12 +140,14 @@ public class ContainerInfoController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 containerInfo = containerInfoService.selectById(request.getParameter("id"));
-                logInfoService.save("删除容器：" + containerInfo.getHostname(), "删除容器：" + containerInfo.getHostname() + "：" + containerInfo.getContainerName(), StaticKeys.LOG_ERROR);
+                String hostname = StringUtils.defaultString(containerInfo.getHostname());
+                String containerName = StringUtils.defaultString(containerInfo.getContainerName());
+                logInfoService.save("删除容器：" + hostname, "删除容器：" + hostname + "：" + containerName, StaticKeys.LOG_ERROR);
                 containerInfoService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(containerInfo.getHostname() + ":" + containerInfo.getContainerName(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save(StringUtils.defaultString(containerInfo.getHostname()) + ":" + StringUtils.defaultString(containerInfo.getContainerName()), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
         }
         return "redirect:/containerInfo/list";
     }
