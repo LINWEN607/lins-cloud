@@ -31,7 +31,7 @@ public class AuthRestFilter implements Filter {
     @Autowired
     CommonConfig commonConfig;
 
-    String[] static_resource = {"/agent/minTask", "/login/toLogin", "/login/login", "/appInfo/agentList", "/static/"};
+    String[] static_resource = {"/agent/minTask", "/login/toLogin", "/login/login", "/appInfo/agentList", "/static/", "/settings/"};
 
     String[] dash_views = {"/dash/main", "/dash/systemInfoList", "/dash/detail", "/dash/chart"};
 
@@ -105,6 +105,10 @@ public class AuthRestFilter implements Filter {
         }
         if (uri.indexOf("/heathMonitor") > -1) {
             session.setAttribute("menuActive", "51");
+            return;
+        }
+        if (uri.indexOf("/settings/pwd") > -1) {
+            session.setAttribute("menuActive", "61");
             return;
         }
         session.setAttribute("menuActive", "11");

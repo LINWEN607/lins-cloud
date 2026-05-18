@@ -26,16 +26,24 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-        <!-- Messages Dropdown Menu -->
+        <!-- User dropdown -->
         <li class="nav-item dropdown">
-            <a class="nav-link" style="cursor:pointer;" title="修改密码" onclick="javascript:alert('请在server端application.yml修改');" data-toggle="dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
                 <i class="fa fa-user-circle"></i>
             </a>
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link" style="cursor:pointer;" title="退出" data-toggle="dropdown" onclick="javascript:window.location.href='/wgcloud/login/loginOut';" >
-                <i class="fa fa-window-close"></i>
-            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <a href="/wgcloud/settings/pwd" class="dropdown-item">
+                    <i class="fas fa-key"></i> 修改密码
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="javascript:toggleTheme();" class="dropdown-item">
+                    <i class="fas fa-adjust"></i> <span id="themeText">切换主题</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/wgcloud/login/loginOut" class="dropdown-item">
+                    <i class="fas fa-sign-out-alt"></i> 退出登录
+                </a>
+            </div>
         </li>
 
     </ul>

@@ -2,6 +2,7 @@ package com.wgcloud.controller;
 
 import com.wgcloud.config.CommonConfig;
 import com.wgcloud.entity.AccountInfo;
+import com.wgcloud.service.SystemConfigService;
 import com.wgcloud.util.shorturl.MD5;
 import com.wgcloud.util.staticvar.StaticKeys;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,9 @@ public class LoginCotroller {
 
     @Resource
     private CommonConfig commonConfig;
+
+    @Resource
+    private SystemConfigService systemConfigService;
 
     /**
      * 转向到登录页面
@@ -78,7 +82,9 @@ public class LoginCotroller {
                     return "login/login";
                 }*/
                 AccountInfo accountInfo = new AccountInfo();
-                if (MD5.GetMD5Code(commonConfig.getAdmindPwd()).equals(passwd) && StaticKeys.ADMIN_ACCOUNT.equals(userName)) {
+                String dbPwd = systemConfigService.getVal("adminPwd");
+                String validPwd = dbPwd != null ? dbPwd : MD5.GetMD5Code(commonConfig.getAdmindPwd());
+                if (validPwd.equals(passwd) && StaticKeys.ADMIN_ACCOUNT.equals(userName)) {
                     accountInfo.setAccount(StaticKeys.ADMIN_ACCOUNT);
                     accountInfo.setId(StaticKeys.ADMIN_ACCOUNT);
                     request.getSession().setAttribute(StaticKeys.LOGIN_KEY, accountInfo);

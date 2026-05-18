@@ -4,7 +4,7 @@
     <div class="brand-link">
         <img th:src="@{'/static/logincss/logo.png'}"  class="brand-image img-circle elevation-3"
              style="opacity: .8">
-        <span class="brand-text font-weight-light">WGCLOUD</span>
+        <span class="brand-text font-weight-light">LINS</span>
     </div>
 
     <!-- Sidebar -->
@@ -220,6 +220,45 @@
                 </li>
 
 
+                <th:block th:if="${#strings.startsWith(session.menuActive,'6')}">
+                    <li class="nav-item has-treeview menu-open">
+                        <a  href="javascript:void(0);" class="nav-link active">
+                </th:block>
+                <th:block th:unless="${#strings.startsWith(session.menuActive,'6')}">
+                    <li class="nav-item has-treeview">
+                        <a  href="javascript:void(0);" class="nav-link">
+                </th:block>
+                <i class="nav-icon fas fa-cog"></i>
+                <p>
+                    设置
+                    <i class="fas fa-angle-left right"></i>
+                </p>
+                </a>
+                <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '61'}">
+                            <a th:href="@{'/settings/pwd'}" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '61'}">
+                            <a th:href="@{'/settings/pwd'}" class="nav-link">
+                        </th:block>
+                        <i class="fas fa-key nav-icon"></i>
+                        <p>修改密码</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '62'}">
+                            <a href="javascript:toggleTheme();" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '62'}">
+                            <a href="javascript:toggleTheme();" class="nav-link">
+                        </th:block>
+                        <i class="fas fa-adjust nav-icon"></i>
+                        <p>主题设置</p>
+                        </a>
+                    </li>
+                </ul>
+                </li>
 
             </ul>
         </nav>

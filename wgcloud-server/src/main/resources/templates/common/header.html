@@ -1,7 +1,7 @@
 <base href="./" th:href="'/'"/>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>WGCLOUD监控系统</title>
+<title>LINS监控系统</title>
 <!-- Tell the browser to be responsive to screen width -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- Font Awesome -->
@@ -25,8 +25,13 @@
 <link rel="stylesheet" th:href="@{'/static/AdminLTE/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css'}">
 <!-- Theme style -->
 <link rel="stylesheet" th:href="@{'/static/AdminLTE/dist/css/adminlte.min.css'}">
+<link rel="stylesheet" th:href="@{'/static/css/theme.css'}">
 <!-- Toastr -->
 <link rel="stylesheet" th:href="@{'/static/AdminLTE/plugins/toastr/toastr.min.css'}">
 <link rel="shortcut icon" type="image/x-icon" th:href="@{'/static/logincss/favicon.png'}"/>
 <style>#adsShowInfoSpanHeader{display:none!important}</style>
 <script>new MutationObserver(function(){var e=document.getElementById('adsShowInfoSpanHeader');if(e)e.remove()}).observe(document.documentElement,{childList:!0,subtree:!0});</script>
+<script>
+function toggleTheme(){document.body.classList.toggle('dark-mode');var e='true'==localStorage.getItem('dark-mode');localStorage.setItem('dark-mode',!e)}
+document.addEventListener('DOMContentLoaded',function(){if('true'===localStorage.getItem('dark-mode'))document.body.classList.add('dark-mode')});
+</script>

@@ -321,3 +321,13 @@ CREATE TABLE `ALERT_DINGTALK` (
   `CREATE_TIME` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for system_config
+-- ----------------------------
+DROP TABLE IF EXISTS `SYSTEM_CONFIG`;
+CREATE TABLE `SYSTEM_CONFIG` (
+  `CONFIG_KEY` varchar(100) NOT NULL,
+  `CONFIG_VALUE` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`CONFIG_KEY`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
