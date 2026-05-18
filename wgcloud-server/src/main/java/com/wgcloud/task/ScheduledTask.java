@@ -418,6 +418,9 @@ public class ScheduledTask {
                         }
                     }
                     if (!issaved) {
+                        if (StringUtils.isEmpty(systemInfo.getRemark())) {
+                            systemInfo.setRemark(systemInfo.getHostname());
+                        }
                         insertList.add(systemInfo);
                     }
                 }

@@ -25,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,15 +109,36 @@ public class AppInfoController {
      * @return
      */
     @RequestMapping(value = "list")
-    public String AppInfoList(AppInfo appInfo, Model model) {
+    public String AppInfoList(AppInfo appInfo, Model model, HttpServletRequest request) {
         Map<String, Object> params = new HashMap<String, Object>();
         try {
+            List<SystemInfo> systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
+            model.addAttribute("systemInfoList", systemInfoList);
+
+            Map<String, String> hostRemarkMap = new HashMap<>();
+            for (SystemInfo si : systemInfoList) {
+                hostRemarkMap.put(si.getHostname(), si.getRemark());
+            }
+            model.addAttribute("hostRemarkMap", hostRemarkMap);
+
             StringBuffer url = new StringBuffer();
-            String hostname = null;
-            if (!StringUtils.isEmpty(appInfo.getHostname())) {
-                hostname = CodeUtil.unescape(appInfo.getHostname());
-                params.put("hostname", hostname.trim());
-                url.append("&hostname=").append(CodeUtil.escape(hostname));
+            String remark = request.getParameter("remark");
+            if (!StringUtils.isEmpty(remark)) {
+                remark = CodeUtil.unescape(remark);
+                Map<String, Object> sysParams = new HashMap<>();
+                sysParams.put("remark", remark);
+                List<SystemInfo> hosts = systemInfoService.selectAllByParams(sysParams);
+                if (!hosts.isEmpty()) {
+                    List<String> hostnameList = new ArrayList<>();
+                    for (SystemInfo h : hosts) {
+                        hostnameList.add(h.getHostname());
+                    }
+                    params.put("hostnameList", hostnameList);
+                    url.append("&remark=").append(CodeUtil.escape(remark));
+                } else {
+                    params.put("hostname", "__NO_RESULT__");
+                    url.append("&remark=").append(CodeUtil.escape(remark));
+                }
             }
             PageInfo pageInfo = appInfoService.selectByParams(params, appInfo.getPage(), appInfo.getPageSize());
             PageUtil.initPageNumber(pageInfo, model);

@@ -40,7 +40,11 @@ function viewApps(hostname) {
 
 function ajaxSaveRemark() {
     $("#form2").ajaxSubmit(function (message) {
-        window.location.href = window.location.href;
+        if (message === "duplicate") {
+            alert("该备注已被其他主机使用");
+        } else {
+            window.location.href = window.location.href;
+        }
     });
 }
 

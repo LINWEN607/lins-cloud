@@ -39,16 +39,21 @@ public class HostInfoController {
 
     /**
      * 保存主机备注信息
-     *
-     * @param SystemInfo
-     * @param model
-     * @param request
-     * @return
      */
     @ResponseBody
     @RequestMapping(value = "save")
     public String saveHostInfo(SystemInfo SystemInfo, Model model, HttpServletRequest request) {
         try {
+            if (!StringUtils.isEmpty(SystemInfo.getRemark())) {
+                Map<String, Object> checkParams = new HashMap<>();
+                checkParams.put("remark", SystemInfo.getRemark());
+                List<SystemInfo> existList = systemInfoService.selectAllByParams(checkParams);
+                for (SystemInfo exist : existList) {
+                    if (!exist.getId().equals(SystemInfo.getId())) {
+                        return "duplicate";
+                    }
+                }
+            }
             if (StringUtils.isEmpty(SystemInfo.getId())) {
                 systemInfoService.save(SystemInfo);
             } else {
@@ -61,7 +66,7 @@ public class HostInfoController {
             logger.error("保存主机备注信息错误：", e);
             logInfoService.save(SystemInfo.getHostname(), "保存主机备注信息错误：" + e.toString(), StaticKeys.LOG_ERROR);
         }
-        return "redirect:/dash/systemInfoList";
+        return "success";
     }
 
 

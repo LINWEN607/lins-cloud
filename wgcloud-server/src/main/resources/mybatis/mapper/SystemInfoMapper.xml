@@ -23,6 +23,9 @@
 		<if test="hostname != null">
 			<![CDATA[ AND HOST_NAME = #{hostname} ]]>
 		</if>
+		<if test="remark != null">
+			<![CDATA[ AND REMARK LIKE CONCAT('%',#{remark},'%') ]]>
+		</if>
 		<if test="memPer != null">
 			<![CDATA[ AND MEM_PER >= #{memPer} ]]>
 		</if>

@@ -47,7 +47,7 @@ public class ContainerInfoController {
     private SystemInfoService systemInfoService;
 
     @RequestMapping(value = "list")
-    public String list(ContainerInfo containerInfo, Model model) {
+    public String list(ContainerInfo containerInfo, Model model, HttpServletRequest request) {
         Map<String, Object> params = new HashMap<String, Object>();
         List<SystemInfo> systemInfoList = new ArrayList<>();
         try {
@@ -56,13 +56,32 @@ public class ContainerInfoController {
             logger.error("获取主机列表用于容器下拉框失败", e);
         }
         model.addAttribute("systemInfoList", systemInfoList);
+
+        Map<String, String> hostRemarkMap = new HashMap<>();
+        for (SystemInfo si : systemInfoList) {
+            hostRemarkMap.put(si.getHostname(), si.getRemark());
+        }
+        model.addAttribute("hostRemarkMap", hostRemarkMap);
+
         try {
             StringBuffer url = new StringBuffer();
-            String hostname = null;
-            if (!StringUtils.isEmpty(containerInfo.getHostname())) {
-                hostname = CodeUtil.unescape(containerInfo.getHostname());
-                params.put("hostname", hostname.trim());
-                url.append("&hostname=").append(CodeUtil.escape(hostname));
+            String remark = request.getParameter("remark");
+            if (!StringUtils.isEmpty(remark)) {
+                remark = CodeUtil.unescape(remark);
+                Map<String, Object> sysParams = new HashMap<>();
+                sysParams.put("remark", remark);
+                List<SystemInfo> hosts = systemInfoService.selectAllByParams(sysParams);
+                if (!hosts.isEmpty()) {
+                    List<String> hostnameList = new ArrayList<>();
+                    for (SystemInfo h : hosts) {
+                        hostnameList.add(h.getHostname());
+                    }
+                    params.put("hostnameList", hostnameList);
+                    url.append("&remark=").append(CodeUtil.escape(remark));
+                } else {
+                    params.put("hostname", "__NO_RESULT__");
+                    url.append("&remark=").append(CodeUtil.escape(remark));
+                }
             }
             if (!StringUtils.isEmpty(containerInfo.getContainerName())) {
                 params.put("containerName", containerInfo.getContainerName().trim());

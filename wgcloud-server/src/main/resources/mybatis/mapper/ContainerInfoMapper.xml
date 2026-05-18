@@ -17,6 +17,10 @@
 		<if test="hostname != null">
 			<![CDATA[ AND HOSTNAME LIKE CONCAT('%',#{hostname},'%')]]>
 		</if>
+		<if test="hostnameList != null and hostnameList.size() > 0">
+			AND HOSTNAME IN
+			<foreach item="item" index="index" collection="hostnameList" open="(" separator="," close=")">#{item}</foreach>
+		</if>
 		<if test="containerName != null">
 			<![CDATA[ AND CONTAINER_NAME LIKE CONCAT('%',#{containerName},'%')]]>
 		</if>

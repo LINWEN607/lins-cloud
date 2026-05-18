@@ -21,6 +21,10 @@
 		<if test="hostname != null">
 			<![CDATA[ AND HOST_NAME LIKE  CONCAT('%',#{hostname},'%')]]>
 		</if>
+		<if test="hostnameList != null and hostnameList.size() > 0">
+			AND HOST_NAME IN
+			<foreach item="item" index="index" collection="hostnameList" open="(" separator="," close=")">#{item}</foreach>
+		</if>
 		<if test="startTime != null and endTime !=null and startTime !='' and endTime != '' ">
 			<![CDATA[ AND CREATE_TIME >= #{startTime} and CREATE_TIME <=#{endTime}]]>
 		</if>

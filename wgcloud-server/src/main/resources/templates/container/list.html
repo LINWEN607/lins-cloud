@@ -35,7 +35,7 @@
           <form class="form-inline ml-3" th:action="@{'/containerInfo/list'}">
             <button type="button" onclick="showAddModal()" class="btn btn-primary btn-sm" style="margin-right:5px;">添加</button>
             <div class="input-group input-group-sm">
-              <input class="form-control" name="hostname" autocomplete="off" th:value="${containerInfo.hostname}" type="text" placeholder="输入IP" style="width:120px;margin-right:3px;">
+              <input class="form-control" name="remark" autocomplete="off" type="text" placeholder="主机备注" style="width:120px;margin-right:3px;">
               <input class="form-control" name="containerName" autocomplete="off" th:value="${containerInfo.containerName}" type="text" placeholder="容器名" style="width:120px;margin-right:3px;">
               <div class="input-group-append">
                 <button class="btn btn-primary" type="submit">
@@ -51,7 +51,7 @@
           <thead>
           <tr>
             <th style="width: 80px">序号</th>
-            <th>IP</th>
+            <th>主机</th>
             <th>容器名称</th>
             <th>CPU使用率%</th>
             <th>内存使用率%</th>
@@ -64,7 +64,7 @@
           <th:block th:each="item,iterStat : ${page.list}">
             <tr>
               <td th:text="${iterStat.index+1}">1</td>
-              <td th:text="${item.hostname}"></td>
+              <td th:text="${hostRemarkMap.get(item.hostname)} ?: ${item.hostname}"></td>
               <td>
                 <th:block th:if="${item.state == '2'}">
                   <span style="color:red;font-weight:500;" th:text="${item.containerName}"></span>
@@ -142,7 +142,7 @@
             <select name="hostname" id="modalHostname" class="validate[required] form-control select2" style="width:100%;">
               <option value="">请选择</option>
               <th:block th:each="item : ${systemInfoList}">
-                <option th:value="${item.hostname}" th:text="${item.hostname}"></option>
+                <option th:value="${item.hostname}" th:text="${item.remark} ?: ${item.hostname}"></option>
               </th:block>
             </select>
           </div>
