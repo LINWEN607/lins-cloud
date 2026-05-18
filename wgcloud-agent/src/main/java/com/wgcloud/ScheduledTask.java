@@ -144,7 +144,8 @@ public class ScheduledTask {
 
             // container state
             try {
-                Process process = Runtime.getRuntime().exec("docker stats --no-stream --format \"{{json .}}\"");
+                String[] cmd = {"/bin/sh", "-c", "docker stats --no-stream --all --format \"{{json .}}\""};
+                Process process = Runtime.getRuntime().exec(cmd);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String line;
                 JSONArray containerStateList = new JSONArray();
@@ -167,11 +168,22 @@ public class ScheduledTask {
                     }
                 }
                 reader.close();
-                process.waitFor();
+                int exitCode = process.waitFor();
+                if (exitCode != 0) {
+                    BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    StringBuilder errMsg = new StringBuilder();
+                    String errLine;
+                    while ((errLine = errReader.readLine()) != null) {
+                        errMsg.append(errLine);
+                    }
+                    errReader.close();
+                    logger.error("docker stats 执行失败: {}", errMsg.toString());
+                }
                 if (containerStateList.size() > 0) {
                     jsonObject.put("containerStateList", containerStateList);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                logger.error("采集容器状态失败", e);
             }
 
             logger.debug("---------------" + jsonObject.toString());
