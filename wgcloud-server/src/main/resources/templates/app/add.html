@@ -54,7 +54,7 @@
                     <select  name="hostname" id="hostname"  class="validate[required] form-control select2" style="width: 100%;">
                         <option value="">请选择</option>
                         <th:block th:each="item,iterStat : ${systemInfoList}">
-                            <option  data-select2-id="" th:attr="data-select2-id=${item.hostname}" th:text="${item.remark} ?: ${item.hostname}">Alabama</option>
+                            <option th:value="${item.hostname}" th:attr="data-select2-id=${item.hostname}" th:text="${item.remark} ?: ${item.hostname}">Alabama</option>
                         </th:block>
                     </select>
                 </div>
