@@ -119,15 +119,14 @@ public class ContainerInfoController {
 
     @ResponseBody
     @RequestMapping(value = "containerNames")
-    public String containerNames(HttpServletRequest request) {
+    public List<String> containerNames(HttpServletRequest request) {
         String hostname = request.getParameter("hostname");
-        if (StringUtils.isEmpty(hostname)) return "[]";
+        if (StringUtils.isEmpty(hostname)) return new ArrayList<>();
         try {
-            List<String> names = containerStateService.getDistinctContainerNames(hostname);
-            return JSONUtil.toJsonStr(names);
+            return containerStateService.getDistinctContainerNames(hostname);
         } catch (Exception e) {
             logger.error("获取容器列表错误", e);
-            return "[]";
+            return new ArrayList<>();
         }
     }
 
