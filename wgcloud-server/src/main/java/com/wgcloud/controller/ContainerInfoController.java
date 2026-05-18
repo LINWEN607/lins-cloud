@@ -48,9 +48,14 @@ public class ContainerInfoController {
     @RequestMapping(value = "list")
     public String list(ContainerInfo containerInfo, Model model) {
         Map<String, Object> params = new HashMap<String, Object>();
+        List<SystemInfo> systemInfoList = new ArrayList<>();
         try {
-            List<SystemInfo> systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
-            model.addAttribute("systemInfoList", systemInfoList);
+            systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
+        } catch (Exception e) {
+            logger.error("获取主机列表用于容器下拉框失败", e);
+        }
+        model.addAttribute("systemInfoList", systemInfoList);
+        try {
             StringBuffer url = new StringBuffer();
             String hostname = null;
             if (!StringUtils.isEmpty(containerInfo.getHostname())) {
