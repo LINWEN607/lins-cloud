@@ -87,4 +87,12 @@
 		ORDER BY CREATE_TIME DESC
 	</select>
 
+	<select id="selectDistinctContainerName" parameterType="map" resultType="java.lang.String">
+		SELECT DISTINCT CONTAINER_NAME FROM CONTAINER_STATE
+		<where>
+			<if test="hostname != null"><![CDATA[ AND HOSTNAME = #{hostname} ]]></if>
+		</where>
+		ORDER BY CONTAINER_NAME ASC
+	</select>
+
 </mapper>

@@ -43,4 +43,10 @@ public class ContainerStateService {
     public List<ContainerState> selectAllByParams(Map<String, Object> params) throws Exception {
         return containerStateMapper.selectAllByParams(params);
     }
+
+    public List<String> getDistinctContainerNames(String hostname) throws Exception {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("hostname", hostname);
+        return containerStateMapper.selectDistinctContainerName(params);
+    }
 }

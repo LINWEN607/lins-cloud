@@ -24,4 +24,6 @@ public interface ContainerStateMapper {
     public int deleteById(String[] id) throws Exception;
 
     public int deleteByDate(Map<String, Object> map) throws Exception;
+
+    public List<String> selectDistinctContainerName(Map<String, Object> params) throws Exception;
 }

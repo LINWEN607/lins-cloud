@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.Resource;
@@ -121,6 +122,20 @@ public class ContainerInfoController {
             logInfoService.save(containerInfo.getHostname(), "编辑容器错误：" + e.toString(), StaticKeys.LOG_ERROR);
         }
         return "container/add";
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "containerNames")
+    public String containerNames(HttpServletRequest request) {
+        String hostname = request.getParameter("hostname");
+        if (StringUtils.isEmpty(hostname)) return "[]";
+        try {
+            List<String> names = containerStateService.getDistinctContainerNames(hostname);
+            return JSONUtil.toJsonStr(names);
+        } catch (Exception e) {
+            logger.error("获取容器列表错误", e);
+            return "[]";
+        }
     }
 
     @RequestMapping(value = "del")
