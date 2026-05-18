@@ -33,7 +33,7 @@
         <h3 class="card-title">容器列表</h3>
         <div class=" float-sm-right">
           <form class="form-inline ml-3" th:action="@{'/containerInfo/list'}">
-            <button type="button" onclick="add()" class="btn btn-primary btn-sm" style="margin-right:5px;">添加</button>
+            <button type="button" onclick="showAddModal()" class="btn btn-primary btn-sm" style="margin-right:5px;">添加</button>
             <div class="input-group input-group-sm">
               <input class="form-control" name="hostname" autocomplete="off" th:value="${containerInfo.hostname}" type="text" placeholder="输入IP" style="width:120px;margin-right:3px;">
               <input class="form-control" name="containerName" autocomplete="off" th:value="${containerInfo.containerName}" type="text" placeholder="容器名" style="width:120px;margin-right:3px;">
@@ -105,8 +105,8 @@
               </td>
               <td th:text="${#dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss')}"></td>
               <td>
-                <button type="button" th:onclick="edit([[${item.id}]])" class="btn bg-gradient-primary btn-sm">编辑</button>
-                <button type="button" th:onclick="del([[${item.id}]])" class="btn bg-gradient-danger btn-sm">删除</button>
+                <button type="button" th:onclick="showEditModal('[[${item.id}]]','[[${item.hostname}]]','[[${item.containerName}]]')" class="btn bg-gradient-primary btn-sm">编辑</button>
+                <button type="button" th:onclick="del('[[${item.id}]]')" class="btn bg-gradient-danger btn-sm">删除</button>
               </td>
             </tr>
           </th:block>
@@ -126,7 +126,100 @@
 
 </div>
 
-<script th:src="@{'/static/js/container.js'}"></script>
+<!-- Modal -->
+<div class="modal fade" id="containerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="modalTitle">添加容器监控</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="modalForm" th:action="@{'/containerInfo/save'}" method="post">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="editId"/>
+          <div class="form-group">
+            <label><font color="red">*</font>监控主机</label>
+            <select name="hostname" id="modalHostname" class="validate[required] form-control select2" style="width:100%;">
+              <option value="">请选择</option>
+              <th:block th:each="item : ${systemInfoList}">
+                <option th:value="${item.hostname}" th:text="${item.hostname}"></option>
+              </th:block>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><font color="red">*</font>容器名称</label>
+            <select name="containerName" id="modalContainerName" class="validate[required] form-control select2" style="width:100%;">
+              <option value="">请先选择主机IP</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary btn-sm">保存</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+    function loadContainerNames(hostname, callback) {
+        var $sel = $("#modalContainerName");
+        $sel.empty().append('<option value="">加载中...</option>');
+        if (!hostname) {
+            $sel.empty().append('<option value="">请先选择主机IP</option>');
+            return;
+        }
+        $.get("/lins/containerInfo/containerNames", {hostname: hostname}, function(data) {
+            $sel.empty().append('<option value="">请选择容器</option>');
+            if (data && data.length > 0) {
+                $.each(data, function(i, name) {
+                    $sel.append('<option value="' + name + '">' + name + '</option>');
+                });
+            } else {
+                $sel.append('<option value="">该主机暂无容器数据</option>');
+            }
+            $sel.select2();
+            if (callback) callback();
+        });
+    }
+
+    function showAddModal() {
+        $("#modalTitle").text("添加容器监控");
+        $("#editId").val("");
+        $("#modalForm")[0].reset();
+        $("#modalHostname").val("").select2();
+        $("#modalContainerName").empty().append('<option value="">请先选择主机IP</option>').select2();
+        $("#containerModal").modal("show");
+    }
+
+    function showEditModal(id, hostname, containerName) {
+        $("#modalTitle").text("编辑容器监控");
+        $("#editId").val(id);
+        $("#modalHostname").val(hostname).select2();
+        loadContainerNames(hostname, function(){
+            $("#modalContainerName").val(containerName).select2();
+        });
+        $("#containerModal").modal("show");
+    }
+
+    function del(id) {
+        if (confirm("你确定要删除吗？")) {
+            window.location.href = "/lins/containerInfo/del?id=" + id;
+        }
+    }
+
+    $(document).ready(function(){
+        $('.select2').select2();
+        $("#modalHostname").on('change', function(){
+            loadContainerNames($(this).val());
+        });
+        $('#containerModal').on('hidden.bs.modal', function(){
+            $("#editId").val("");
+            $("#modalForm")[0].reset();
+        });
+    });
+</script>
 
 </body>
 </html>

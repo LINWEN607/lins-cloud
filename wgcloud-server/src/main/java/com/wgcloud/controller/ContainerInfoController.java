@@ -49,6 +49,8 @@ public class ContainerInfoController {
     public String list(ContainerInfo containerInfo, Model model) {
         Map<String, Object> params = new HashMap<String, Object>();
         try {
+            List<SystemInfo> systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
+            model.addAttribute("systemInfoList", systemInfoList);
             StringBuffer url = new StringBuffer();
             String hostname = null;
             if (!StringUtils.isEmpty(containerInfo.getHostname())) {
@@ -105,23 +107,8 @@ public class ContainerInfoController {
     }
 
     @RequestMapping(value = "edit")
-    public String edit(Model model, HttpServletRequest request) {
-        String id = request.getParameter("id");
-        ContainerInfo containerInfo = new ContainerInfo();
-        try {
-            List<SystemInfo> systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
-            model.addAttribute("systemInfoList", systemInfoList);
-            if (StringUtils.isEmpty(id)) {
-                model.addAttribute("containerInfo", containerInfo);
-                return "container/add";
-            }
-            containerInfo = containerInfoService.selectById(id);
-            model.addAttribute("containerInfo", containerInfo);
-        } catch (Exception e) {
-            logger.error("编辑容器错误", e);
-            logInfoService.save(containerInfo.getHostname(), "编辑容器错误：" + e.toString(), StaticKeys.LOG_ERROR);
-        }
-        return "container/add";
+    public String edit(HttpServletRequest request) {
+        return "redirect:/containerInfo/list";
     }
 
     @ResponseBody
