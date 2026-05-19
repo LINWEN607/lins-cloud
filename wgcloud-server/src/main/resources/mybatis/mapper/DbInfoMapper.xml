@@ -122,6 +122,9 @@
 			<if test="cpuPer != null">
 				<![CDATA[ AND CPU_PER >= #{cpuPer} ]]>
 			</if>
+			<if test="dbState != null">
+				<![CDATA[ AND DB_STATE = #{dbState} ]]>
+			</if>
 		</where>
 	</select>
 

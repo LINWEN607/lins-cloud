@@ -34,6 +34,9 @@
 		<if test="cpuPerLe != null">
 			<![CDATA[ AND CPU_PER <= #{cpuPerLe} ]]>
 		</if>
+		<if test="state != null">
+			<![CDATA[ AND STATE = #{state} ]]>
+		</if>
 	</sql>
 	
 	<select id="selectByAccountId" resultMap="resultMap" parameterType="java.lang.String">
@@ -198,6 +201,12 @@
 		</where>
 		 ORDER BY CREATE_TIME DESC
 	</select>
-	
-	
+
+	<select id="countByParams" parameterType="map" resultType="java.lang.Integer">
+		SELECT count(*) FROM APP_INFO
+		<where>
+			<include refid="queryByParams" />
+		</where>
+	</select>
+
 </mapper>

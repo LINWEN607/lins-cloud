@@ -38,6 +38,9 @@
 		<if test="cpuPerLe != null">
 			<![CDATA[ AND CPU_PER <= #{cpuPerLe} ]]>
 		</if>
+		<if test="state != null">
+			<![CDATA[ AND STATE = #{state} ]]>
+		</if>
 	</sql>
 	
 	<select id="selectById" resultMap="resultMap" parameterType="java.lang.String">
@@ -209,5 +212,12 @@
 		</where>
 		ORDER BY HOST_NAME ASC
 	</select>
-	
+
+	<select id="countByParams" parameterType="map" resultType="java.lang.Integer">
+		SELECT count(*) FROM SYSTEM_INFO
+		<where>
+			<include refid="queryByParams" />
+		</where>
+	</select>
+
 </mapper>

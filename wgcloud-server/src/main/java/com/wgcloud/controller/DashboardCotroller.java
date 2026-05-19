@@ -90,6 +90,13 @@ public class DashboardCotroller {
             int totalSizeApp = appInfoService.countByParams(params);
             model.addAttribute("totalSizeApp", totalSizeApp);
 
+            params.put("state", "1");
+            int systemInfoOnlineSize = systemInfoService.countByParams(params);
+            model.addAttribute("systemInfoOnlineSize", systemInfoOnlineSize);
+            int appInfoOnlineSize = appInfoService.countByParams(params);
+            model.addAttribute("appInfoOnlineSize", appInfoOnlineSize);
+            params.clear();
+
             params.put("memPer", 90);
             int memPerSize_90 = systemInfoService.countByParams(params);
             double a = 0;
@@ -178,6 +185,10 @@ public class DashboardCotroller {
 
             int dbInfoSize = dbInfoService.countByParams(params);
             model.addAttribute("dbInfoSize", dbInfoSize);
+            params.put("dbState", "1");
+            int dbInfoOnlineSize = dbInfoService.countByParams(params);
+            model.addAttribute("dbInfoOnlineSize", dbInfoOnlineSize);
+            params.clear();
 
             int heathSize = heathMonitorService.countByParams(params);
             model.addAttribute("heathSize", heathSize);
