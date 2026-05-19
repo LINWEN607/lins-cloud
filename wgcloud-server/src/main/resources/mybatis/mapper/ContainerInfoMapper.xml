@@ -24,6 +24,9 @@
 		<if test="containerName != null">
 			<![CDATA[ AND CONTAINER_NAME LIKE CONCAT('%',#{containerName},'%')]]>
 		</if>
+		<if test="state != null">
+			AND STATE = #{state}
+		</if>
 	</sql>
 
 	<select id="selectById" resultMap="resultMap" parameterType="java.lang.String">
