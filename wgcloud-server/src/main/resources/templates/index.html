@@ -144,6 +144,40 @@
         </div>
         <!-- /.row -->
 
+        <!-- Container stats row -->
+        <div class="row" th:if="${totalContainerSize > 0}">
+          <div class="col-12">
+            <h5 style="color:#e6edf3;margin:8px 0 4px 4px;font-size:0.9rem;font-weight:600">容器统计</h5>
+          </div>
+          <div class="col-lg-4 col-6">
+            <div class="small-box bg-info">
+              <div class="inner">
+                <h3 th:text="${totalContainerSize}"></h3>
+                <p>总容器数</p>
+              </div>
+              <a th:href="@{'/containerInfo/list'}" class="small-box-footer">更多 <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-4 col-6">
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3 th:text="${containerOnlineSize}"></h3>
+                <p>在线容器</p>
+              </div>
+              <a th:href="@{'/containerInfo/list'}" class="small-box-footer">更多 <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <div class="col-lg-4 col-6">
+            <div class="small-box bg-danger">
+              <div class="inner">
+                <h3 th:text="${containerOfflineSize}"></h3>
+                <p>离线容器</p>
+              </div>
+              <a th:href="@{'/containerInfo/list'}" class="small-box-footer">更多 <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+        </div>
+        <!-- /.row -->
 
         <!-- Main row -->
         <div class="row">

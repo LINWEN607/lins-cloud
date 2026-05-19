@@ -70,6 +70,8 @@ public class DashboardCotroller {
     HeathMonitorService heathMonitorService;
     @Autowired
     HostInfoService hostInfoService;
+    @Resource
+    ContainerInfoService containerInfoService;
 
     /**
      * 根据条件查询host列表
@@ -184,6 +186,16 @@ public class DashboardCotroller {
             model.addAttribute("heath200Size", heath200Size);
             model.addAttribute("heatherrSize", (heathSize - heath200Size));
 
+            params.clear();
+            int totalContainerSize = containerInfoService.countByParams(params);
+            model.addAttribute("totalContainerSize", totalContainerSize);
+            params.put("state", "1");
+            int containerOnlineSize = containerInfoService.countByParams(params);
+            model.addAttribute("containerOnlineSize", containerOnlineSize);
+            params.clear();
+            params.put("state", "2");
+            int containerOfflineSize = containerInfoService.countByParams(params);
+            model.addAttribute("containerOfflineSize", containerOfflineSize);
 
         } catch (Exception e) {
             logger.error("主面板信息异常：", e);
