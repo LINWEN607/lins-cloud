@@ -942,6 +942,9 @@ body.login-page {
 .dash-online {
     color: #3fb950;
 }
+.dash-offline {
+    color: #f85149;
+}
 .dash-sep {
     color: #30363d;
 }

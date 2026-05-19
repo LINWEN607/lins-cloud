@@ -109,11 +109,10 @@
                   <span class="dash-total" th:text="${heathSize}">0</span>
                 </div>
                 <div class="dash-card-meta">
-                  <span class="dash-online" th:text="'在线 ' + ${heath200Size}">在线 0</span>
+                  <span class="dash-online" th:text="'正常 ' + ${heath200Size}">正常 0</span>
                   <span class="dash-sep">|</span>
-                  <span th:if="${heathSize > 0}" class="dash-pct"
-                        th:text="${#numbers.formatDecimal((heath200Size * 100.0 / heathSize), 1, 2)} + '%'">0%</span>
-                  <span th:if="${heathSize == 0}" class="dash-pct">0%</span>
+                  <span th:if="${heatherrSize > 0}" class="dash-offline" th:text="'异常 ' + ${heatherrSize}">异常 0</span>
+                  <span th:if="${heatherrSize == 0}" class="dash-online" th:text="'异常 0'">异常 0</span>
                 </div>
               </div>
               <a th:href="@{'/heathMonitor/list'}" class="dash-card-link"></a>
@@ -125,7 +124,7 @@
         <!-- Second row: DOCKER + logs + data table chart -->
         <div class="row">
           <!-- DOCKER -->
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="dashboard-card">
               <div class="dash-card-icon" style="background:#1a2a3a;">
                 <i class="fab fa-docker"></i>
@@ -148,7 +147,7 @@
             </div>
           </div>
           <!-- 系统日志 -->
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="dashboard-card">
               <div class="dash-card-icon" style="background:#2a1a1a;">
                 <i class="fas fa-history"></i>
@@ -164,7 +163,7 @@
             </div>
           </div>
           <!-- 数据表统计 -->
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="dashboard-card">
               <div class="dash-card-icon" style="background:#1a2a2a;">
                 <i class="fas fa-table"></i>
@@ -180,22 +179,7 @@
               <a th:href="@{'/dbTable/list'}" class="dash-card-link"></a>
             </div>
           </div>
-          <!-- 异常服务 -->
-          <div class="col-lg-3 col-6">
-            <div class="dashboard-card">
-              <div class="dash-card-icon" style="background:#3a1a1a;">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="dash-card-body">
-                <div class="dash-card-title">异常</div>
-                <div class="dash-card-subtitle">异常服务接口</div>
-                <div class="dash-card-stats">
-                  <span class="dash-total" th:text="${heatherrSize}">0</span>
-                </div>
-              </div>
-              <a th:href="@{'/heathMonitor/list'}" class="dash-card-link"></a>
-            </div>
-          </div>
+
         </div>
         <!-- /.row -->
 
