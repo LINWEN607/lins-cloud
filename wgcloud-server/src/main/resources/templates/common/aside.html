@@ -160,37 +160,6 @@
                 </li>
 
 
-                <th:block th:if="${#strings.startsWith(session.menuActive,'2')}">
-                    <li class="nav-item has-treeview menu-open">
-                        <a  href="javascript:void(0);" class="nav-link active">
-                </th:block>
-                <th:block th:unless="${#strings.startsWith(session.menuActive,'2')}">
-                    <li class="nav-item has-treeview">
-                        <a  href="javascript:void(0);" class="nav-link">
-                </th:block>
-                <i class="nav-icon fas fa-copy"></i>
-                <p>
-                    系统信息
-                    <i class="fas fa-angle-left right"></i>
-                </p>
-                </a>
-                <ul class="nav nav-treeview">
-                    <li class="nav-item">
-                        <th:block th:if="${session.menuActive eq '21'}">
-                            <a th:href="@{'/log/list'}" class="nav-link active">
-                        </th:block>
-                        <th:block th:unless="${session.menuActive eq '21'}">
-                            <a th:href="@{'/log/list'}" class="nav-link">
-                        </th:block>
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>日志信息</p>
-                        </a>
-                    </li>
-
-                </ul>
-                </li>
-
-
 
                 <th:block th:if="${#strings.startsWith(session.menuActive,'3')}">
                     <li class="nav-item has-treeview menu-open">
@@ -227,6 +196,37 @@
                         </th:block>
                         <i class="far fa-circle nav-icon"></i>
                         <p>告警配置</p>
+                        </a>
+                    </li>
+
+                </ul>
+                </li>
+
+
+                <th:block th:if="${#strings.startsWith(session.menuActive,'2')}">
+                    <li class="nav-item has-treeview menu-open">
+                        <a  href="javascript:void(0);" class="nav-link active">
+                </th:block>
+                <th:block th:unless="${#strings.startsWith(session.menuActive,'2')}">
+                    <li class="nav-item has-treeview">
+                        <a  href="javascript:void(0);" class="nav-link">
+                </th:block>
+                <i class="nav-icon fas fa-history"></i>
+                <p>
+                    系统日志
+                    <i class="fas fa-angle-left right"></i>
+                </p>
+                </a>
+                <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '21'}">
+                            <a th:href="@{'/log/list'}" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '21'}">
+                            <a th:href="@{'/log/list'}" class="nav-link">
+                        </th:block>
+                        <i class="far fa-circle nav-icon"></i>
+                        <p>日志信息</p>
                         </a>
                     </li>
 
