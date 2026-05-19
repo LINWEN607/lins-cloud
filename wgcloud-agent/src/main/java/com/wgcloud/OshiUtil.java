@@ -198,7 +198,7 @@ public class OshiUtil {
             txPacketsBegin += net.getPacketsSent();
         }
 
-        //暂停3秒
+        //暂停5秒
         Thread.sleep(5000);
         List<NetworkIF> listEnd = hal.getNetworkIFs();
         for (NetworkIF net : listEnd) {
@@ -208,10 +208,10 @@ public class OshiUtil {
             txPacketsEnd += net.getPacketsSent();
         }
 
-        long rxBytesAvg = (rxBytesEnd - rxBytesBegin) / 3 / 1024;
-        long txBytesAvg = (txBytesEnd - txBytesBegin) / 3 / 1024;
-        long rxPacketsAvg = (rxPacketsEnd - rxPacketsBegin) / 3 / 1024;
-        long txPacketsAvg = (txPacketsEnd - txPacketsBegin) / 3 / 1024;
+        long rxBytesAvg = (rxBytesEnd - rxBytesBegin) / 5 / 1024;
+        long txBytesAvg = (txBytesEnd - txBytesBegin) / 5 / 1024;
+        long rxPacketsAvg = (rxPacketsEnd - rxPacketsBegin) / 5;
+        long txPacketsAvg = (txPacketsEnd - txPacketsBegin) / 5;
         NetIoState netIoState = new NetIoState();
         netIoState.setRxbyt(rxBytesAvg + "");
         netIoState.setTxbyt(txBytesAvg + "");
