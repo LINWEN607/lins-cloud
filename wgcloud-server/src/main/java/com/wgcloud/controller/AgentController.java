@@ -165,8 +165,6 @@ public class AgentController {
                 } catch (Exception e) {
                     logger.error("查询主机信息错误", e);
                 }
-                Map<String, Integer> typeCounts = new LinkedHashMap<>();
-                Map<String, Set<String>> typeIps = new LinkedHashMap<>();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
                     String hostname = match.getStr("hostname");
@@ -177,28 +175,17 @@ public class AgentController {
                     String hash = sha1Hex(dedupKey);
                     if (logMatchDedupCache.containsKey(hash)) continue;
                     logMatchDedupCache.put(hash, now);
-                    String groupKey = hostname + "|" + logFilePath + "|" + matchedType;
-                    typeCounts.merge(groupKey, 1, Integer::sum);
+                    Set<String> ips = new LinkedHashSet<>();
                     Matcher m = SRC_IP_PATTERN.matcher(matchedLine);
-                    if (m.find()) {
-                        typeIps.computeIfAbsent(groupKey, k -> new LinkedHashSet<>()).add(m.group(1));
-                    }
+                    if (m.find()) ips.add(m.group(1));
+                    String remark = hostnameRemarkMap.get(hostname);
+                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, 1, ips);
                     LogInfo li = new LogInfo();
                     li.setId(com.wgcloud.util.UUIDUtil.getUUID());
                     li.setHostname(hostname);
                     li.setInfoContent("日志匹配: " + matchedLine);
                     li.setCreateTime(new java.util.Date());
                     BatchData.LOG_INFO_LIST.add(li);
-                }
-                for (Map.Entry<String, Integer> entry : typeCounts.entrySet()) {
-                    String[] parts = entry.getKey().split("\\|", 3);
-                    String hostname = parts[0];
-                    String logFilePath = parts[1];
-                    String matchedType = parts[2];
-                    int count = entry.getValue();
-                    String remark = hostnameRemarkMap.get(hostname);
-                    Set<String> ips = typeIps.get(entry.getKey());
-                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, count, ips);
                 }
             }
             resultJson.put("result", "success");
