@@ -88,7 +88,11 @@ public class ConnectionUtil {
             if (null == jdbcTemplate) {
                 return 0;
             }
-            return jdbcTemplate.queryForObject(sql, Long.class);
+            logger.info("连接URL: jdbc:mysql://{}:{}/{}", dbInfo.getIp(), dbInfo.getPort(), dbInfo.getDbName());
+            logger.info("执行SQL: {}", sql);
+            long result = jdbcTemplate.queryForObject(sql, Long.class);
+            logger.info("查询结果: {}", result);
+            return result;
         } catch (Exception e) {
             logger.error("统计数据表错误：", e);
             logInfoService.save("统计数据表错误：" + dbInfo.getAliasName(), "IP：" + dbInfo.getIp() + "，端口：" + dbInfo.getPort() + "，数据库别名："
