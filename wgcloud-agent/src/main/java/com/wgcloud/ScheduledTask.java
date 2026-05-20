@@ -18,6 +18,7 @@ import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PostConstruct;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,13 @@ public class ScheduledTask {
     public static List<AppInfo> appInfoList = Collections.synchronizedList(new ArrayList<AppInfo>());
     public static List<LogMonitor> logMonitorList = Collections.synchronizedList(new ArrayList<LogMonitor>());
     private static Map<String, Long> logFilePositions = new ConcurrentHashMap<>();
+    private static final String POSITIONS_FILE = "/app/log/log_positions.json";
+
+    @PostConstruct
+    public void init() {
+        loadLogPositions();
+    }
+
     @Autowired
     private RestUtil restUtil;
     @Autowired
@@ -45,9 +53,9 @@ public class ScheduledTask {
 
     private SystemInfo systemInfo = null;
 
-    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for|session\\s+opened\\s+for", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for|sshd.*session\\s+opened\\s+for", Pattern.CASE_INSENSITIVE);
     private static final Pattern SSH_FAILURE_PATTERN = Pattern.compile("Failed\\s+password\\s+for|authentication\\s+failure", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("session\\s+closed\\s+for|disconnected\\s+from", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("sshd.*session\\s+closed\\s+for|disconnected\\s+from", Pattern.CASE_INSENSITIVE);
 
 
     /**
@@ -242,6 +250,8 @@ public class ScheduledTask {
                 }
             }
 
+            saveLogPositions();
+
             logger.debug("---------------" + jsonObject.toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -282,6 +292,38 @@ public class ScheduledTask {
         return null;
     }
 
+
+    private void loadLogPositions() {
+        File file = new File(POSITIONS_FILE);
+        if (!file.exists()) return;
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] data = new byte[(int) file.length()];
+            fis.read(data);
+            String content = new String(data, "UTF-8");
+            JSONObject json = JSONUtil.parseObj(content);
+            for (Map.Entry<String, Object> entry : json.entrySet()) {
+                logFilePositions.put(entry.getKey(), ((Number) entry.getValue()).longValue());
+            }
+        } catch (Exception e) {
+            logger.error("加载日志位置持久化失败", e);
+        }
+    }
+
+    private void saveLogPositions() {
+        try {
+            JSONObject json = new JSONObject();
+            for (Map.Entry<String, Long> entry : logFilePositions.entrySet()) {
+                json.put(entry.getKey(), entry.getValue());
+            }
+            File file = new File(POSITIONS_FILE);
+            file.getParentFile().mkdirs();
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(json.toString().getBytes("UTF-8"));
+            }
+        } catch (Exception e) {
+            logger.error("保存日志位置持久化失败", e);
+        }
+    }
 
     /**
      * 30秒后执行，每隔5分钟执行, 单位：ms。

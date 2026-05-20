@@ -18,7 +18,7 @@ public class FeishuSender {
 
     public static boolean send(FeishuConfig config, String title, String content) {
         try {
-            String text = "[WGCLOUD] " + title + "\n" + content;
+            String text = "[LINS监控系统] " + title + "\n" + content;
             StringBuilder body = new StringBuilder();
             body.append("{\"msg_type\":\"text\",\"content\":{\"text\":\"").append(escapeJson(text)).append("\"");
 

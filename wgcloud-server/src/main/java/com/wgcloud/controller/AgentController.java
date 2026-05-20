@@ -8,7 +8,6 @@ import com.wgcloud.entity.*;
 import com.wgcloud.service.ContainerInfoService;
 import com.wgcloud.service.ContainerStateService;
 import com.wgcloud.service.LogInfoService;
-import com.wgcloud.service.LogMonitorService;
 import com.wgcloud.service.SystemInfoService;
 import com.wgcloud.util.TokenUtils;
 import com.wgcloud.util.msg.WarnMailUtil;
@@ -41,6 +40,8 @@ public class AgentController {
 
 
     private static final Logger logger = LoggerFactory.getLogger(AgentController.class);
+    private static final Map<String, Long> logMatchDedupCache = new ConcurrentHashMap<>();
+    private static final long DEDUP_WINDOW_MS = 300_000L;
 
     ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 40, 2, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
 
@@ -149,7 +150,8 @@ public class AgentController {
                 }
             }
             if (logMonitorMatch != null) {
-                LogMonitorService logMonitorService = (LogMonitorService) com.wgcloud.common.ApplicationContextHelper.getBean(LogMonitorService.class);
+                long now = System.currentTimeMillis();
+                logMatchDedupCache.entrySet().removeIf(e -> now - e.getValue() > DEDUP_WINDOW_MS);
                 Map<String, String> hostnameRemarkMap = new HashMap<>();
                 try {
                     List<SystemInfo> sysList = systemInfoService.selectAllByParams(new HashMap<>());
@@ -159,14 +161,19 @@ public class AgentController {
                 } catch (Exception e) {
                     logger.error("查询主机信息错误", e);
                 }
-                Map<String, List<String>> grouped = new LinkedHashMap<>();
+                Map<String, Integer> typeCounts = new LinkedHashMap<>();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
                     String hostname = match.getStr("hostname");
                     String logFilePath = match.getStr("logFilePath");
                     String matchedLine = match.getStr("matchedLine");
-                    String key = hostname + "|" + logFilePath;
-                    grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(matchedLine);
+                    String matchedType = match.getStr("matchedType");
+                    String dedupKey = hostname + "|" + logFilePath + "|" + matchedLine;
+                    String hash = sha1Hex(dedupKey);
+                    if (logMatchDedupCache.containsKey(hash)) continue;
+                    logMatchDedupCache.put(hash, now);
+                    String groupKey = hostname + "|" + logFilePath + "|" + matchedType;
+                    typeCounts.merge(groupKey, 1, Integer::sum);
                     LogInfo li = new LogInfo();
                     li.setId(com.wgcloud.util.UUIDUtil.getUUID());
                     li.setHostname(hostname);
@@ -174,21 +181,14 @@ public class AgentController {
                     li.setCreateTime(new java.util.Date());
                     BatchData.LOG_INFO_LIST.add(li);
                 }
-                for (Map.Entry<String, List<String>> entry : grouped.entrySet()) {
-                    String[] parts = entry.getKey().split("\\|", 2);
+                for (Map.Entry<String, Integer> entry : typeCounts.entrySet()) {
+                    String[] parts = entry.getKey().split("\\|", 3);
                     String hostname = parts[0];
                     String logFilePath = parts[1];
-                    List<String> lines = entry.getValue();
+                    String matchedType = parts[2];
+                    int count = entry.getValue();
                     String remark = hostnameRemarkMap.get(hostname);
-                    StringBuilder sb = new StringBuilder();
-                    int limit = Math.min(lines.size(), 5);
-                    for (int i = 0; i < limit; i++) {
-                        sb.append(lines.get(i)).append("\n");
-                    }
-                    if (lines.size() > 5) {
-                        sb.append("... 共 ").append(lines.size()).append(" 条匹配");
-                    }
-                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, sb.toString().trim());
+                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, count);
                 }
             }
             resultJson.put("result", "success");
@@ -197,6 +197,20 @@ public class AgentController {
             resultJson.put("result", "error：" + e.toString());
         } finally {
             return resultJson;
+        }
+    }
+
+    private static String sha1Hex(String input) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
+            byte[] digest = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return input;
         }
     }
 

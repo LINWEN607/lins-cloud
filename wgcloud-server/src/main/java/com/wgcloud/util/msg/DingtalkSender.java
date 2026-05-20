@@ -18,7 +18,7 @@ public class DingtalkSender {
 
     public static boolean send(DingtalkConfig config, String title, String content) {
         try {
-            String text = "[WGCLOUD] " + title + "\n" + content;
+            String text = "[LINS监控系统] " + title + "\n" + content;
             String body = "{\"msgtype\":\"text\",\"text\":{\"content\":\"" + escapeJson(text) + "\"}}";
 
             String urlStr = config.getWebhookUrl();
