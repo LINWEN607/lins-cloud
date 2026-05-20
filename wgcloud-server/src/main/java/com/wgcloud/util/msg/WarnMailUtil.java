@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @version v2.3
@@ -294,12 +296,33 @@ public class WarnMailUtil {
         return false;
     }
 
+    private static final Pattern SRC_IP_PATTERN = Pattern.compile("from\\s+(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})", Pattern.CASE_INSENSITIVE);
+
     public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedLines) {
         try {
             String displayName = StringUtils.isEmpty(remark) ? hostname : remark;
             String now = DateUtil.getNowTime().toString().substring(0, 19);
             String title = "日志匹配告警：" + displayName;
-            String commContent = "时间：" + now + "\n主机IP：" + hostname + "（" + displayName + "）\n日志文件：" + logFilePath + "\n匹配内容：\n" + matchedLines;
+            StringBuilder sb = new StringBuilder();
+            sb.append("时间：").append(now).append("\n");
+            sb.append("主机IP：").append(hostname).append("（").append(displayName).append("）\n");
+            sb.append("日志文件：").append(logFilePath).append("\n");
+            sb.append("匹配内容：\n");
+            String[] lines = matchedLines.split("\n");
+            Set<String> ips = new java.util.LinkedHashSet<>();
+            for (String line : lines) {
+                Matcher m = SRC_IP_PATTERN.matcher(line);
+                if (m.find()) {
+                    ips.add(m.group(1));
+                }
+            }
+            if (!ips.isEmpty()) {
+                sb.append("来源IP：").append(String.join("、", ips)).append("\n");
+            }
+            for (String line : lines) {
+                sb.append(line).append("\n");
+            }
+            String commContent = sb.toString().trim();
             sendToAllChannels(title, commContent);
             logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
         } catch (Exception e) {
