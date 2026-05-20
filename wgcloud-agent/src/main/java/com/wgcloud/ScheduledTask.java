@@ -37,9 +37,7 @@ public class ScheduledTask {
     private Logger logger = LoggerFactory.getLogger(ScheduledTask.class);
     public static List<AppInfo> appInfoList = Collections.synchronizedList(new ArrayList<AppInfo>());
     public static List<LogMonitor> logMonitorList = Collections.synchronizedList(new ArrayList<LogMonitor>());
-    private static Map<String, Long> logFilePositions = new ConcurrentHashMap<>();
-    private static final String POSITIONS_FILE = "/app/log/log_positions.json";
-    private boolean positionsLoaded = false;
+    private static Map<String, Long> logFileSizes = new ConcurrentHashMap<>();
 
     @Autowired
     private RestUtil restUtil;
@@ -73,10 +71,6 @@ public class ScheduledTask {
         logInfo.setHostname(commonConfig.getBindIp() + "：Agent错误");
         logInfo.setCreateTime(t);
         try {
-            if (!positionsLoaded) {
-                loadLogPositions();
-                positionsLoaded = true;
-            }
             oshi.SystemInfo si = new oshi.SystemInfo();
 
             HardwareAbstractionLayer hal = si.getHardware();
@@ -210,33 +204,33 @@ public class ScheduledTask {
                         File logFile = new File(lm.getLogFilePath());
                         if (!logFile.exists() || !logFile.isFile()) continue;
                         String key = lm.getId();
-                        Long lastPos = logFilePositions.get(key);
-                        if (lastPos == null) {
-                            long fileLen = logFile.length();
-                            lastPos = fileLen;
+                        long currentSize = logFile.length();
+                        Long lastSize = logFileSizes.get(key);
+                        if (lastSize == null) {
+                            logFileSizes.put(key, currentSize);
+                            continue;
                         }
-                        if (lastPos > logFile.length()) {
-                            lastPos = logFile.length();
-                        }
-                        RandomAccessFile raf = new RandomAccessFile(logFile, "r");
-                        raf.seek(lastPos);
-                        String line;
-                        while ((line = raf.readLine()) != null) {
-                            if (line.trim().length() == 0) continue;
-                            String lineStr = new String(line.getBytes("ISO-8859-1"), "UTF-8");
-                            String matchedType = matchLogLine(lm, lineStr);
-                            if (matchedType != null) {
-                                JSONObject match = new JSONObject();
-                                match.put("logMonitorId", lm.getId());
-                                match.put("hostname", commonConfig.getBindIp());
-                                match.put("logFilePath", lm.getLogFilePath());
-                                match.put("matchedLine", lineStr);
-                                match.put("matchedType", matchedType);
-                                logMatchArray.add(match);
+                        if (currentSize > lastSize) {
+                            RandomAccessFile raf = new RandomAccessFile(logFile, "r");
+                            raf.seek(lastSize);
+                            String line;
+                            while ((line = raf.readLine()) != null) {
+                                if (line.trim().length() == 0) continue;
+                                String lineStr = new String(line.getBytes("ISO-8859-1"), "UTF-8");
+                                String matchedType = matchLogLine(lm, lineStr);
+                                if (matchedType != null) {
+                                    JSONObject match = new JSONObject();
+                                    match.put("logMonitorId", lm.getId());
+                                    match.put("hostname", commonConfig.getBindIp());
+                                    match.put("logFilePath", lm.getLogFilePath());
+                                    match.put("matchedLine", lineStr);
+                                    match.put("matchedType", matchedType);
+                                    logMatchArray.add(match);
+                                }
                             }
+                            raf.close();
                         }
-                        logFilePositions.put(key, logFile.length());
-                        raf.close();
+                        logFileSizes.put(key, currentSize);
                     } catch (Exception e) {
                         logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
                     }
@@ -245,8 +239,6 @@ public class ScheduledTask {
                     jsonObject.put("logMonitorMatch", logMatchArray);
                 }
             }
-
-            saveLogPositions();
 
             logger.debug("---------------" + jsonObject.toString());
         } catch (Exception e) {
@@ -288,38 +280,6 @@ public class ScheduledTask {
         return null;
     }
 
-
-    private void loadLogPositions() {
-        File file = new File(POSITIONS_FILE);
-        if (!file.exists()) return;
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] data = new byte[(int) file.length()];
-            fis.read(data);
-            String content = new String(data, "UTF-8");
-            JSONObject json = JSONUtil.parseObj(content);
-            for (Map.Entry<String, Object> entry : json.entrySet()) {
-                logFilePositions.put(entry.getKey(), ((Number) entry.getValue()).longValue());
-            }
-        } catch (Exception e) {
-            logger.error("加载日志位置持久化失败", e);
-        }
-    }
-
-    private void saveLogPositions() {
-        try {
-            JSONObject json = new JSONObject();
-            for (Map.Entry<String, Long> entry : logFilePositions.entrySet()) {
-                json.put(entry.getKey(), entry.getValue());
-            }
-            File file = new File(POSITIONS_FILE);
-            file.getParentFile().mkdirs();
-            try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(json.toString().getBytes("UTF-8"));
-            }
-        } catch (Exception e) {
-            logger.error("保存日志位置持久化失败", e);
-        }
-    }
 
     /**
      * 30秒后执行，每隔5分钟执行, 单位：ms。
