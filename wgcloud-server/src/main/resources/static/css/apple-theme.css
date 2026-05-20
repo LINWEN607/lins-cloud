@@ -189,37 +189,31 @@ body {
     border-collapse: collapse !important;
 }
 .table thead th {
-    border-bottom: 1px solid #30363d !important;
-    border-top: none !important;
+    border: 1px solid #30363d !important;
     font-weight: 600 !important;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
     color: #8b949e !important;
-    background: #161b22 !important;
-    padding: 10px 12px !important;
+    padding: 6px 13px !important;
 }
 .table td {
-    border-top: 1px solid #21262d !important;
-    padding: 10px 12px !important;
+    border: 1px solid #30363d !important;
+    padding: 6px 13px !important;
     vertical-align: middle !important;
     color: #e6edf3 !important;
 }
 .table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(255,255,255,0.02) !important;
+    background-color: #161b22 !important;
 }
 .table-hover tbody tr:hover {
     background-color: rgba(88,166,255,0.06) !important;
 }
 .table-bordered {
     border: 1px solid #30363d !important;
-    border-radius: 0 !important;
 }
 .table-bordered thead th {
-    border-right: 1px solid #21262d !important;
+    border: 1px solid #30363d !important;
 }
 .table-bordered td {
-    border-right: 1px solid #21262d !important;
+    border: 1px solid #30363d !important;
 }
 
 /* --- Buttons --- */
@@ -652,19 +646,18 @@ body.login-page {
     border-top: 1px solid #30363d !important;
 }
 .dark-mode .table thead th {
-    border-bottom: 1px solid #30363d !important;
+    border: 1px solid #30363d !important;
     color: #8b949e !important;
-    background: #161b22 !important;
 }
 .dark-mode .table td {
-    border-top: 1px solid #21262d !important;
+    border: 1px solid #30363d !important;
     color: #e6edf3 !important;
 }
 .dark-mode .table td a {
     color: #e6edf3 !important;
 }
 .dark-mode .table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(255,255,255,0.015) !important;
+    background-color: #161b22 !important;
 }
 .dark-mode .table-hover tbody tr:hover {
     background-color: rgba(88,166,255,0.06) !important;
@@ -832,13 +825,6 @@ body.login-page {
 .dark-mode .info-box-text,
 .dark-mode .info-box-number {
     color: #e6edf3 !important;
-}
-.dark-mode .table td,
-.dark-mode .table td a {
-    color: #e6edf3 !important;
-}
-.dark-mode .table thead th {
-    color: #8b949e !important;
 }
 .dark-mode .main-sidebar .nav-sidebar .nav-item .nav-link {
     color: #8b949e !important;
