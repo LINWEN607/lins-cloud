@@ -498,28 +498,37 @@ a:hover {
    ========================================== */
 body.login-page {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
-    background: #0d1117 !important;
+    background: linear-gradient(135deg, #0d1117 0%, #1c2333 50%, #0d1117 100%) !important;
     margin: 0;
     padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
 }
 .login-page .login-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    width: 100%;
     padding: 20px;
 }
 .login-page .login-card {
     width: 400px;
     max-width: 100%;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 40px 36px 32px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 .login-page .login-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
 }
 .login-page .login-logo-img {
-    width: 120px;
-    height: 120px;
+    width: 80px;
+    height: 80px;
     border-radius: 16px;
     display: inline-block;
 }

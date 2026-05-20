@@ -13,7 +13,7 @@
 <div class="login-wrapper">
     <div class="login-card">
         <div class="login-header">
-            <img width="120" height="120" th:src="@{'/static/logincss/logo.png'}" class="login-logo-img">
+            <img width="80" height="80" th:src="@{'/static/logincss/logo.png'}" class="login-logo-img">
         </div>
 
         <form id="form1" th:action="@{'/login/login'}" method="post" onsubmit="setMd5Pwd()" class="login-form">
@@ -52,6 +52,8 @@
         <div class="login-footer">登录即表示同意《用户协议》《隐私政策》</div>
     </div>
 </div>
+
+    <link rel="stylesheet" th:href="@{'/static/js/jQuery/validationEngine.jquery.css'}" type="text/css"/>
 
     <script th:src="@{'/static/js/jQuery/jquery-3.2.0.min.js'}"></script>
     <script th:src="@{'/static/js/jQuery/jquery.validationEngine-zh_CN.js'}" type="text/javascript" charset="utf-8"></script>
