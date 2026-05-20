@@ -59,23 +59,23 @@
                   </div>
                   <div class="row">
                     <div class="col-sm-12">
-                      <table class="table table-bordered">
+                      <table class="table table-bordered" style="table-layout: fixed">
                         <thead>
                         <tr>
                           <th style="width: 60px">序号</th>
-                          <th>主机名</th>
+                          <th style="width: 120px">主机名</th>
                           <th>摘要</th>
-                          <th>状态</th>
-                          <th style="width: 160px">时间</th>
-                          <th style="width: 80px">操作</th>
+                          <th style="width: 50px">状态</th>
+                          <th style="width: 150px">时间</th>
+                          <th style="width: 70px">操作</th>
                         </tr>
                         </thead>
                         <tbody>
                         <th:block th:each="item,iterStat : ${page.list}">
                           <tr>
                             <td th:text="${iterStat.index+1}"></td>
-                            <td th:text="${item.hostname}"></td>
-                            <td th:text="${item.infoContent}"></td>
+                            <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.hostname}" title="${item.hostname}"></td>
+                            <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.infoContent.length() > 80 ? item.infoContent.substring(0, 80) + '...' : item.infoContent}" title="${item.infoContent}"></td>
                             <td th:text="${item.state != null ? item.state : '-'}"></td>
                             <td th:text="${item.createTime != null ? #dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
                             <td>
