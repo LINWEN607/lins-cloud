@@ -4,6 +4,8 @@ import com.wgcloud.common.ApplicationContextHelper;
 import com.wgcloud.config.MailConfig;
 import com.wgcloud.entity.*;
 import com.wgcloud.service.LogInfoService;
+import com.wgcloud.service.SystemInfoService;
+import com.wgcloud.util.DateUtil;
 import com.wgcloud.util.staticvar.StaticKeys;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
@@ -32,6 +34,7 @@ public class WarnMailUtil {
     public static Map<String, String> runtimeConfig = new ConcurrentHashMap<>();
 
     private static LogInfoService logInfoService = (LogInfoService) ApplicationContextHelper.getBean(LogInfoService.class);
+    private static SystemInfoService systemInfoService = (SystemInfoService) ApplicationContextHelper.getBean(SystemInfoService.class);
     private static MailConfig mailConfig = (MailConfig) ApplicationContextHelper.getBean(MailConfig.class);
 
     private static String getConfig(String key) {
@@ -291,10 +294,12 @@ public class WarnMailUtil {
         return false;
     }
 
-    public static void sendLogMatchWarn(String hostname, String logFilePath, String matchedLine) {
+    public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedLines) {
         try {
-            String title = "日志匹配告警：" + hostname;
-            String commContent = "主机：" + hostname + "，日志文件：" + logFilePath + "，匹配内容：" + matchedLine;
+            String displayName = StringUtils.isEmpty(remark) ? hostname : remark;
+            String now = DateUtil.getNowTime().toString().substring(0, 19);
+            String title = "日志匹配告警：" + displayName;
+            String commContent = "时间：" + now + "\n主机IP：" + hostname + "（" + displayName + "）\n日志文件：" + logFilePath + "\n匹配内容：\n" + matchedLines;
             sendToAllChannels(title, commContent);
             logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
         } catch (Exception e) {
@@ -313,7 +318,7 @@ public class WarnMailUtil {
             }
             email.setAuthenticator(new DefaultAuthenticator(StaticKeys.mailSet.getFromMailName(), StaticKeys.mailSet.getFromPwd()));
             email.setFrom(StaticKeys.mailSet.getFromMailName());//发信者
-            email.setSubject("[LINS] " + mailTitle);//标题
+            email.setSubject("[LINS监控系统] " + mailTitle);//标题
             email.setCharset("UTF-8");//编码格式
             email.setHtmlMsg(mailContent + content_suffix);//内容
             email.addTo(mails.split(";"));

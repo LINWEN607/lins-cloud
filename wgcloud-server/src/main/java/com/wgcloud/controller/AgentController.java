@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -150,15 +150,45 @@ public class AgentController {
             }
             if (logMonitorMatch != null) {
                 LogMonitorService logMonitorService = (LogMonitorService) com.wgcloud.common.ApplicationContextHelper.getBean(LogMonitorService.class);
+                Map<String, String> hostnameRemarkMap = new HashMap<>();
+                try {
+                    List<SystemInfo> sysList = systemInfoService.selectAllByParams(new HashMap<>());
+                    for (SystemInfo si : sysList) {
+                        hostnameRemarkMap.put(si.getHostname(), si.getRemark());
+                    }
+                } catch (Exception e) {
+                    logger.error("查询主机信息错误", e);
+                }
+                Map<String, List<String>> grouped = new LinkedHashMap<>();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
+                    String hostname = match.getStr("hostname");
+                    String logFilePath = match.getStr("logFilePath");
+                    String matchedLine = match.getStr("matchedLine");
+                    String key = hostname + "|" + logFilePath;
+                    grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(matchedLine);
                     LogInfo li = new LogInfo();
                     li.setId(com.wgcloud.util.UUIDUtil.getUUID());
-                    li.setHostname(match.getStr("hostname"));
-                    li.setInfoContent("日志匹配: " + match.getStr("matchedLine"));
+                    li.setHostname(hostname);
+                    li.setInfoContent("日志匹配: " + matchedLine);
                     li.setCreateTime(new java.util.Date());
                     BatchData.LOG_INFO_LIST.add(li);
-                    com.wgcloud.util.msg.WarnMailUtil.sendLogMatchWarn(match.getStr("hostname"), match.getStr("logFilePath"), match.getStr("matchedLine"));
+                }
+                for (Map.Entry<String, List<String>> entry : grouped.entrySet()) {
+                    String[] parts = entry.getKey().split("\\|", 2);
+                    String hostname = parts[0];
+                    String logFilePath = parts[1];
+                    List<String> lines = entry.getValue();
+                    String remark = hostnameRemarkMap.get(hostname);
+                    StringBuilder sb = new StringBuilder();
+                    int limit = Math.min(lines.size(), 5);
+                    for (int i = 0; i < limit; i++) {
+                        sb.append(lines.get(i)).append("\n");
+                    }
+                    if (lines.size() > 5) {
+                        sb.append("... 共 ").append(lines.size()).append(" 条匹配");
+                    }
+                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, sb.toString().trim());
                 }
             }
             resultJson.put("result", "success");
