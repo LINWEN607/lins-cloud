@@ -264,21 +264,22 @@
     container: 'dbTableList',
     forceFit: true,
     height: 500,
-    padding: [ 20, 40, 50, 124 ]
+    padding: [ 20, 60, 100, 50 ]
   });
   chart2.source(data2, {
     value: {
       min: 0,
-      nice: false,
-      alias: '条'
+      nice: true,
+      alias: '数据量'
     }
   });
   chart2.axis('tableName', {
     label: {
       textStyle: {
         fill: '#d1d1d6',
-        fontSize: 12
-      }
+        fontSize: 11
+      },
+      rotate: -30
     },
     tickLine: {
       alignWithLabel: false,
@@ -290,23 +291,21 @@
   });
   chart2.axis('value', {
     label: null,
-    title: {
-      offset: 30,
-      textStyle: {
-        fontSize: 12,
-        fontWeight: 300
-      }
-    }
+    title: null
   });
   chart2.legend(false);
-  chart2.coord().transpose();
-  chart2.interval().position('tableName*value').size(26)
-          .opacity(1)
+  chart2.interval().position('tableName*value').size(32)
+          .opacity(0.85)
+          .color('#58a6ff')
           .label('value', {
             textStyle: {
-              fill: '#8d8d8d'
+              fill: '#d1d1d6',
+              fontSize: 11
             },
-            offset: 10
+            offset: -35,
+            formatter: function(val) {
+              return val + ' 条';
+            }
           });
   chart2.render();
 </script>
