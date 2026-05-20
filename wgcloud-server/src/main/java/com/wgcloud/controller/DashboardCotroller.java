@@ -181,7 +181,22 @@ public class DashboardCotroller {
             model.addAttribute("dbTableSum", dbTableSum == null ? 0 : dbTableSum);
 
             PageInfo pageInfoDbTableList = dbTableService.selectByParams(params, 1, 10);
-            model.addAttribute("dbTableList", JSONUtil.parseArray(pageInfoDbTableList.getList()));
+            List<Map<String, Object>> dbTableChartData = new ArrayList<>();
+            for (DbTable dt : pageInfoDbTableList.getList()) {
+                Map<String, Object> item = new HashMap<>();
+                try {
+                    DbInfo dbInfo = dbInfoService.selectById(dt.getDbInfoId());
+                    String dbName = (dbInfo != null && StringUtils.isNotBlank(dbInfo.getAliasName()))
+                        ? dbInfo.getAliasName()
+                        : (dbInfo != null ? dbInfo.getIp() : dt.getDbInfoId());
+                    item.put("showName", dbName + "\n" + dt.getTableName());
+                } catch (Exception e) {
+                    item.put("showName", dt.getTableName());
+                }
+                item.put("value", dt.getTableCount());
+                dbTableChartData.add(item);
+            }
+            model.addAttribute("dbTableList", JSONUtil.parseArray(dbTableChartData));
 
             int dbInfoSize = dbInfoService.countByParams(params);
             model.addAttribute("dbInfoSize", dbInfoSize);

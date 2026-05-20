@@ -189,7 +189,12 @@
             <div class="card" id="chartInfoList"></div>
           </section>
           <section class="col-lg-5 connectedSortable ui-sortable">
-            <div class="card" id="dbTableList"></div>
+            <div class="card">
+              <div class="card-header" style="border-bottom:1px solid #30363d;">
+                <h3 class="card-title" style="color:#d1d1d6;font-size:14px;"><i class="fas fa-database" style="margin-right:6px;"></i>数据表统计</h3>
+              </div>
+              <div id="dbTableList"></div>
+            </div>
           </section>
         </div>
 
@@ -264,7 +269,7 @@
     container: 'dbTableList',
     forceFit: true,
     height: 500,
-    padding: [ 20, 60, 100, 50 ]
+    padding: [ 30, 40, 110, 50 ]
   });
   chart2.source(data2, {
     value: {
@@ -273,39 +278,44 @@
       alias: '数据量'
     }
   });
-  chart2.axis('tableName', {
+  chart2.axis('showName', {
     label: {
       textStyle: {
         fill: '#d1d1d6',
-        fontSize: 11
-      },
-      rotate: -30
+        fontSize: 11,
+        lineHeight: 16
+      }
     },
-    tickLine: {
-      alignWithLabel: false,
-      length: 0
-    },
-    line: {
-      lineWidth: 0
-    }
+    tickLine: { length: 0 },
+    line: { lineWidth: 0 },
+    grid: null
   });
   chart2.axis('value', {
     label: null,
-    title: null
+    title: null,
+    grid: null
   });
   chart2.legend(false);
-  chart2.interval().position('tableName*value').size(32)
-          .opacity(0.85)
-          .color('#58a6ff')
+  chart2.tooltip({
+    showTitle: false,
+    itemTpl: '<li><span style="background-color:{color};" class="g2-tooltip-marker"></span>{name}: {value}</li>'
+  });
+  chart2.interval().position('showName*value').size(30)
+          .opacity(0.9)
+          .color('showName', ['#58a6ff','#3fb5a0','#bc8cff','#f0883e','#e85d75','#5cd6e0','#9b6aff','#ff6b6b','#4ecdc4','#45b7d1'])
           .label('value', {
             textStyle: {
-              fill: '#d1d1d6',
-              fontSize: 11
+              fill: '#f0f0f0',
+              fontSize: 12,
+              fontWeight: 600
             },
-            offset: -35,
+            offset: -25,
             formatter: function(val) {
               return val + ' 条';
             }
+          })
+          .style({
+            radius: 6
           });
   chart2.render();
 </script>
