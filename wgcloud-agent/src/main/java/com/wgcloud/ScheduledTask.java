@@ -48,9 +48,9 @@ public class ScheduledTask {
 
     private SystemInfo systemInfo = null;
 
-    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for|sshd.*session\\s+opened\\s+for", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for", Pattern.CASE_INSENSITIVE);
     private static final Pattern SSH_FAILURE_PATTERN = Pattern.compile("Failed\\s+password\\s+for|authentication\\s+failure", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("sshd.*session\\s+closed\\s+for|disconnected\\s+from", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("sshd.*session\\s+closed\\s+for", Pattern.CASE_INSENSITIVE);
 
 
     /**
