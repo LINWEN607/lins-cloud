@@ -360,3 +360,22 @@ CREATE TABLE `CONTAINER_STATE` (
   PRIMARY KEY (`ID`),
   KEY `CONTAINER_STATE_INDEX` (`HOSTNAME`,`CONTAINER_NAME`,`CREATE_TIME`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for log_monitor
+-- ----------------------------
+DROP TABLE IF EXISTS `LOG_MONITOR`;
+CREATE TABLE `LOG_MONITOR` (
+  `ID` char(32) NOT NULL,
+  `HOST_NAME` varchar(255) NOT NULL COMMENT '主机IP',
+  `LOG_FILE_PATH` varchar(500) NOT NULL COMMENT '日志文件路径',
+  `MATCH_SSH_SUCCESS` tinyint(4) DEFAULT '0' COMMENT '匹配SSH登录成功',
+  `MATCH_SSH_FAILURE` tinyint(4) DEFAULT '0' COMMENT '匹配SSH登录失败',
+  `MATCH_SSH_LOGOUT` tinyint(4) DEFAULT '0' COMMENT '匹配SSH退出',
+  `CUSTOM_KEYWORDS` varchar(1000) DEFAULT NULL COMMENT '自定义关键词,逗号分隔',
+  `ENABLE_ALERT` tinyint(4) DEFAULT '1' COMMENT '匹配后是否推送告警',
+  `STATE` char(1) DEFAULT '1' COMMENT '1启用 2停用',
+  `REMARK` varchar(255) DEFAULT NULL COMMENT '备注',
+  `CREATE_TIME` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

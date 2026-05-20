@@ -16,3 +16,4 @@ services:
       - /data/wgcloud/agent/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
       - /var/run:/var/run:ro
+      - /var/log:/var/log:ro

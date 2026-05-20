@@ -8,6 +8,7 @@ import com.wgcloud.entity.*;
 import com.wgcloud.service.ContainerInfoService;
 import com.wgcloud.service.ContainerStateService;
 import com.wgcloud.service.LogInfoService;
+import com.wgcloud.service.LogMonitorService;
 import com.wgcloud.service.SystemInfoService;
 import com.wgcloud.util.TokenUtils;
 import com.wgcloud.util.msg.WarnMailUtil;
@@ -75,6 +76,7 @@ public class AgentController {
         JSONObject netIoState = agentJsonObject.getJSONObject("netIoState");
         JSONArray deskStateList = agentJsonObject.getJSONArray("deskStateList");
         JSONArray containerStateList = agentJsonObject.getJSONArray("containerStateList");
+        JSONArray logMonitorMatch = agentJsonObject.getJSONArray("logMonitorMatch");
 
         try {
 
@@ -144,6 +146,19 @@ public class AgentController {
                     } catch (Exception e) {
                         logger.error("保存容器状态错误", e);
                     }
+                }
+            }
+            if (logMonitorMatch != null) {
+                LogMonitorService logMonitorService = (LogMonitorService) com.wgcloud.common.ApplicationContextHelper.getBean(LogMonitorService.class);
+                for (Object obj : logMonitorMatch) {
+                    JSONObject match = (JSONObject) obj;
+                    LogInfo li = new LogInfo();
+                    li.setId(com.wgcloud.util.UUIDUtil.getUUID());
+                    li.setHostname(match.getStr("hostname"));
+                    li.setInfoContent("日志匹配: " + match.getStr("matchedLine"));
+                    li.setCreateTime(new java.util.Date());
+                    BatchData.LOG_INFO_LIST.add(li);
+                    com.wgcloud.util.msg.WarnMailUtil.sendLogMatchWarn(match.getStr("hostname"), match.getStr("logFilePath"), match.getStr("matchedLine"));
                 }
             }
             resultJson.put("result", "success");

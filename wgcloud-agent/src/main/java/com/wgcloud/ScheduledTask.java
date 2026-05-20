@@ -14,15 +14,14 @@ import org.springframework.stereotype.Component;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @version V2.3
@@ -37,12 +36,18 @@ public class ScheduledTask {
 
     private Logger logger = LoggerFactory.getLogger(ScheduledTask.class);
     public static List<AppInfo> appInfoList = Collections.synchronizedList(new ArrayList<AppInfo>());
+    public static List<LogMonitor> logMonitorList = Collections.synchronizedList(new ArrayList<LogMonitor>());
+    private static Map<String, Long> logFilePositions = new ConcurrentHashMap<>();
     @Autowired
     private RestUtil restUtil;
     @Autowired
     private CommonConfig commonConfig;
 
     private SystemInfo systemInfo = null;
+
+    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for|session\\s+opened\\s+for", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_FAILURE_PATTERN = Pattern.compile("Failed\\s+password\\s+for|authentication\\s+failure", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("session\\s+closed\\s+for|disconnected\\s+from", Pattern.CASE_INSENSITIVE);
 
 
     /**
@@ -57,6 +62,8 @@ public class ScheduledTask {
     public void minTask() {
         List<AppInfo> APP_INFO_LIST_CP = new ArrayList<AppInfo>();
         APP_INFO_LIST_CP.addAll(appInfoList);
+        List<LogMonitor> LOG_MONITOR_LIST_CP = new ArrayList<LogMonitor>();
+        LOG_MONITOR_LIST_CP.addAll(logMonitorList);
         JSONObject jsonObject = new JSONObject();
         LogInfo logInfo = new LogInfo();
         Timestamp t = FormatUtil.getNowTime();
@@ -186,6 +193,55 @@ public class ScheduledTask {
                 logger.error("采集容器状态失败", e);
             }
 
+            // log monitor
+            if (LOG_MONITOR_LIST_CP.size() > 0) {
+                JSONArray logMatchArray = new JSONArray();
+                for (LogMonitor lm : LOG_MONITOR_LIST_CP) {
+                    if (!"1".equals(lm.getState())) continue;
+                    if (StringUtils.isEmpty(lm.getLogFilePath())) continue;
+                    try {
+                        File logFile = new File(lm.getLogFilePath());
+                        if (!logFile.exists() || !logFile.isFile()) continue;
+                        String key = lm.getId();
+                        Long lastPos = logFilePositions.get(key);
+                        if (lastPos == null) {
+                            lastPos = 0L;
+                            long fileLen = logFile.length();
+                            if (fileLen > 8192) {
+                                lastPos = fileLen - 8192;
+                            }
+                        }
+                        if (lastPos > logFile.length()) {
+                            lastPos = 0L;
+                        }
+                        RandomAccessFile raf = new RandomAccessFile(logFile, "r");
+                        raf.seek(lastPos);
+                        String line;
+                        while ((line = raf.readLine()) != null) {
+                            if (line.trim().length() == 0) continue;
+                            String lineStr = new String(line.getBytes("ISO-8859-1"), "UTF-8");
+                            String matchedType = matchLogLine(lm, lineStr);
+                            if (matchedType != null) {
+                                JSONObject match = new JSONObject();
+                                match.put("logMonitorId", lm.getId());
+                                match.put("hostname", commonConfig.getBindIp());
+                                match.put("logFilePath", lm.getLogFilePath());
+                                match.put("matchedLine", lineStr);
+                                match.put("matchedType", matchedType);
+                                logMatchArray.add(match);
+                            }
+                        }
+                        logFilePositions.put(key, raf.getFilePointer());
+                        raf.close();
+                    } catch (Exception e) {
+                        logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
+                    }
+                }
+                if (logMatchArray.size() > 0) {
+                    jsonObject.put("logMonitorMatch", logMatchArray);
+                }
+            }
+
             logger.debug("---------------" + jsonObject.toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -197,6 +253,29 @@ public class ScheduledTask {
             restUtil.post(commonConfig.getServerUrl() + "/lins/agent/minTask", jsonObject);
         }
 
+    }
+
+
+    private String matchLogLine(LogMonitor lm, String line) {
+        if (lm.getMatchSshSuccess() == 1 && SSH_SUCCESS_PATTERN.matcher(line).find()) {
+            return "ssh_success";
+        }
+        if (lm.getMatchSshFailure() == 1 && SSH_FAILURE_PATTERN.matcher(line).find()) {
+            return "ssh_failure";
+        }
+        if (lm.getMatchSshLogout() == 1 && SSH_LOGOUT_PATTERN.matcher(line).find()) {
+            return "ssh_logout";
+        }
+        if (!StringUtils.isEmpty(lm.getCustomKeywords())) {
+            String[] keywords = lm.getCustomKeywords().split(",");
+            for (String kw : keywords) {
+                String trimmed = kw.trim();
+                if (trimmed.length() > 0 && line.contains(trimmed)) {
+                    return "custom";
+                }
+            }
+        }
+        return null;
     }
 
 
@@ -230,6 +309,40 @@ public class ScheduledTask {
                 jsonObject.put("logInfo", logInfo);
             }
             restUtil.post(commonConfig.getServerUrl() + "/lins/agent/minTask", jsonObject);
+        }
+    }
+
+
+    /**
+     * 35秒后执行，每隔5分钟执行, 单位：ms。
+     * 获取日志监控配置
+     */
+    @Scheduled(initialDelay = 35 * 1000L, fixedRate = 300 * 1000)
+    public void logMonitorListTask() {
+        LogInfo logInfo = new LogInfo();
+        Timestamp t = FormatUtil.getNowTime();
+        logInfo.setHostname(commonConfig.getBindIp() + "：Agent获取日志监控配置错误");
+        logInfo.setCreateTime(t);
+        try {
+            JSONObject paramsJson = new JSONObject();
+            paramsJson.put("hostname", commonConfig.getBindIp());
+            String resultJson = restUtil.post(commonConfig.getServerUrl() + "/lins/logMonitor/agentList", paramsJson);
+            if (resultJson != null) {
+                JSONArray resultArray = JSONUtil.parseArray(resultJson);
+                logMonitorList.clear();
+                if (resultArray.size() > 0) {
+                    logMonitorList = JSONUtil.toList(resultArray, LogMonitor.class);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logInfo.setInfoContent(e.toString());
+        } finally {
+            if (!StringUtils.isEmpty(logInfo.getInfoContent())) {
+                JSONObject logJson = new JSONObject();
+                logJson.put("logInfo", logInfo);
+                restUtil.post(commonConfig.getServerUrl() + "/lins/agent/minTask", logJson);
+            }
         }
     }
 

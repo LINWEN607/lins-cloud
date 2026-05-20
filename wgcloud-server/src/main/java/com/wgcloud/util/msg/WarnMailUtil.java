@@ -291,6 +291,18 @@ public class WarnMailUtil {
         return false;
     }
 
+    public static void sendLogMatchWarn(String hostname, String logFilePath, String matchedLine) {
+        try {
+            String title = "日志匹配告警：" + hostname;
+            String commContent = "主机：" + hostname + "，日志文件：" + logFilePath + "，匹配内容：" + matchedLine;
+            sendToAllChannels(title, commContent);
+            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+        } catch (Exception e) {
+            logger.error("发送日志匹配告警失败：", e);
+            logInfoService.save("发送日志匹配告警错误", e.toString(), StaticKeys.LOG_ERROR);
+        }
+    }
+
     public static String sendMail(String mails, String mailTitle, String mailContent) {
         try {
             HtmlEmail email = new HtmlEmail();

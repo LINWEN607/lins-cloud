@@ -126,6 +126,17 @@
                         <p>数据表管理</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '43'}">
+                            <a th:href="@{'/logMonitor/list'}" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '43'}">
+                            <a th:href="@{'/logMonitor/list'}" class="nav-link">
+                        </th:block>
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <p>日志监控</p>
+                        </a>
+                    </li>
 
                 </ul>
                 </li>
