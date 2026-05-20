@@ -22,7 +22,7 @@ public class IndexController implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/login/login.html");
+        registry.addViewController("/").setViewName("redirect:/login/toLogin");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
 

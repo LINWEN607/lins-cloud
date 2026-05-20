@@ -214,9 +214,7 @@ public class ScheduledTask {
                         if (lastPos == null) {
                             lastPos = 0L;
                             long fileLen = logFile.length();
-                            if (fileLen > 8192) {
-                                lastPos = fileLen - 8192;
-                            }
+                            lastPos = fileLen;
                         }
                         if (lastPos > logFile.length()) {
                             lastPos = 0L;
