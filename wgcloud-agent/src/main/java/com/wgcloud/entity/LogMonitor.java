@@ -2,6 +2,8 @@ package com.wgcloud.entity;
 
 public class LogMonitor extends BaseEntity {
 
+    private String monitorType;
+
     private String hostname;
 
     private String logFilePath;
@@ -19,6 +21,14 @@ public class LogMonitor extends BaseEntity {
     private String state;
 
     private String remark;
+
+    public String getMonitorType() {
+        return monitorType;
+    }
+
+    public void setMonitorType(String monitorType) {
+        this.monitorType = monitorType;
+    }
 
     public String getHostname() {
         return hostname;

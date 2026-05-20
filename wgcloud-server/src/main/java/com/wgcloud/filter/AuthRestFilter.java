@@ -96,6 +96,14 @@ public class AuthRestFilter implements Filter {
             session.setAttribute("menuActive", "42");
             return;
         }
+        if (uri.indexOf("/logMonitor/ssh") > -1) {
+            session.setAttribute("menuActive", "431");
+            return;
+        }
+        if (uri.indexOf("/logMonitor/nginx") > -1) {
+            session.setAttribute("menuActive", "432");
+            return;
+        }
         if (uri.indexOf("/logMonitor") > -1) {
             session.setAttribute("menuActive", "43");
             return;

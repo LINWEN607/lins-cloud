@@ -4,6 +4,8 @@ import java.util.Date;
 
 public class LogMonitor extends BaseEntity {
 
+    private String monitorType;
+
     private String hostname;
 
     private String logFilePath;
@@ -23,6 +25,14 @@ public class LogMonitor extends BaseEntity {
     private String remark;
 
     private Date createTime;
+
+    public String getMonitorType() {
+        return monitorType;
+    }
+
+    public void setMonitorType(String monitorType) {
+        this.monitorType = monitorType;
+    }
 
     public String getHostname() {
         return hostname;

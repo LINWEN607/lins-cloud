@@ -3,6 +3,7 @@
 <mapper namespace="com.wgcloud.mapper.LogMonitorMapper">
 	<resultMap id="resultMap" type="com.wgcloud.entity.LogMonitor">
 		<id column="ID" property="id" jdbcType="CHAR" />
+		<result column="MONITOR_TYPE" property="monitorType" jdbcType="CHAR" />
 		<result column="HOST_NAME" property="hostname" jdbcType="CHAR" />
 		<result column="LOG_FILE_PATH" property="logFilePath" jdbcType="CHAR" />
 		<result column="MATCH_SSH_SUCCESS" property="matchSshSuccess" jdbcType="TINYINT" />
@@ -16,7 +17,7 @@
 	</resultMap>
 
 	<sql id="tableColumnList">
-		ID,HOST_NAME,LOG_FILE_PATH,MATCH_SSH_SUCCESS,MATCH_SSH_FAILURE,MATCH_SSH_LOGOUT,CUSTOM_KEYWORDS,ENABLE_ALERT,STATE,REMARK,CREATE_TIME
+		ID,MONITOR_TYPE,HOST_NAME,LOG_FILE_PATH,MATCH_SSH_SUCCESS,MATCH_SSH_FAILURE,MATCH_SSH_LOGOUT,CUSTOM_KEYWORDS,ENABLE_ALERT,STATE,REMARK,CREATE_TIME
 	</sql>
 
 	<sql id="queryByParams">
@@ -29,6 +30,9 @@
 		</if>
 		<if test="state != null">
 			<![CDATA[ AND STATE = #{state} ]]>
+		</if>
+		<if test="monitorType != null">
+			<![CDATA[ AND MONITOR_TYPE = #{monitorType} ]]>
 		</if>
 	</sql>
 
@@ -56,6 +60,7 @@
 		INSERT INTO LOG_MONITOR
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="id != null">ID,</if>
+			<if test="monitorType != null">MONITOR_TYPE,</if>
 			<if test="hostname != null">HOST_NAME,</if>
 			<if test="logFilePath != null">LOG_FILE_PATH,</if>
 			<if test="matchSshSuccess != null">MATCH_SSH_SUCCESS,</if>
@@ -69,6 +74,7 @@
 		</trim>
 		<trim prefix="values (" suffix=")" suffixOverrides=",">
 			<if test="id != null">#{id},</if>
+			<if test="monitorType != null">#{monitorType},</if>
 			<if test="hostname != null">#{hostname},</if>
 			<if test="logFilePath != null">#{logFilePath},</if>
 			<if test="matchSshSuccess != null">#{matchSshSuccess},</if>
@@ -83,16 +89,17 @@
 	</insert>
 
 	<insert id="insertList" parameterType="java.util.List">
-		INSERT INTO LOG_MONITOR (ID,HOST_NAME,LOG_FILE_PATH,MATCH_SSH_SUCCESS,MATCH_SSH_FAILURE,MATCH_SSH_LOGOUT,CUSTOM_KEYWORDS,ENABLE_ALERT,STATE,REMARK,CREATE_TIME)
+		INSERT INTO LOG_MONITOR (ID,MONITOR_TYPE,HOST_NAME,LOG_FILE_PATH,MATCH_SSH_SUCCESS,MATCH_SSH_FAILURE,MATCH_SSH_LOGOUT,CUSTOM_KEYWORDS,ENABLE_ALERT,STATE,REMARK,CREATE_TIME)
 		VALUES
 		<foreach collection="list" item="item" index="index" separator=",">
-			(#{item.id},#{item.hostname},#{item.logFilePath},#{item.matchSshSuccess},#{item.matchSshFailure},#{item.matchSshLogout},#{item.customKeywords},#{item.enableAlert},#{item.state},#{item.remark},#{item.createTime})
+			(#{item.id},#{item.monitorType},#{item.hostname},#{item.logFilePath},#{item.matchSshSuccess},#{item.matchSshFailure},#{item.matchSshLogout},#{item.customKeywords},#{item.enableAlert},#{item.state},#{item.remark},#{item.createTime})
 		</foreach>
 	</insert>
 
 	<update id="updateById" parameterType="com.wgcloud.entity.LogMonitor">
 		UPDATE LOG_MONITOR
 		<set>
+			<if test="monitorType != null">MONITOR_TYPE = #{monitorType},</if>
 			<if test="hostname != null">HOST_NAME = #{hostname},</if>
 			<if test="logFilePath != null">LOG_FILE_PATH = #{logFilePath},</if>
 			<if test="matchSshSuccess != null">MATCH_SSH_SUCCESS = #{matchSshSuccess},</if>

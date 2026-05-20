@@ -257,14 +257,18 @@ public class ScheduledTask {
 
 
     private String matchLogLine(LogMonitor lm, String line) {
-        if (lm.getMatchSshSuccess() == 1 && SSH_SUCCESS_PATTERN.matcher(line).find()) {
-            return "ssh_success";
-        }
-        if (lm.getMatchSshFailure() == 1 && SSH_FAILURE_PATTERN.matcher(line).find()) {
-            return "ssh_failure";
-        }
-        if (lm.getMatchSshLogout() == 1 && SSH_LOGOUT_PATTERN.matcher(line).find()) {
-            return "ssh_logout";
+        String type = lm.getMonitorType();
+        if (type == null) type = "ssh";
+        if ("ssh".equals(type)) {
+            if (lm.getMatchSshSuccess() == 1 && SSH_SUCCESS_PATTERN.matcher(line).find()) {
+                return "ssh_success";
+            }
+            if (lm.getMatchSshFailure() == 1 && SSH_FAILURE_PATTERN.matcher(line).find()) {
+                return "ssh_failure";
+            }
+            if (lm.getMatchSshLogout() == 1 && SSH_LOGOUT_PATTERN.matcher(line).find()) {
+                return "ssh_logout";
+            }
         }
         if (!StringUtils.isEmpty(lm.getCustomKeywords())) {
             String[] keywords = lm.getCustomKeywords().split(",");

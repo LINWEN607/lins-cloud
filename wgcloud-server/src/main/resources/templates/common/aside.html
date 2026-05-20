@@ -89,11 +89,11 @@
                 </li>
 
 
-                <th:block th:if="${#strings.startsWith(session.menuActive,'4')}">
+                <th:block th:if="${#strings.startsWith(session.menuActive,'41') || #strings.startsWith(session.menuActive,'42')}">
                     <li class="nav-item has-treeview menu-open">
                         <a  href="javascript:void(0);" class="nav-link active">
                 </th:block>
-                <th:block th:unless="${#strings.startsWith(session.menuActive,'4')}">
+                <th:block th:unless="${#strings.startsWith(session.menuActive,'41') || #strings.startsWith(session.menuActive,'42')}">
                     <li class="nav-item has-treeview">
                         <a  href="javascript:void(0);" class="nav-link">
                 </th:block>
@@ -126,18 +126,46 @@
                         <p>数据表管理</p>
                         </a>
                     </li>
+                </ul>
+                </li>
+
+                <th:block th:if="${#strings.startsWith(session.menuActive,'43')}">
+                    <li class="nav-item has-treeview menu-open">
+                        <a  href="javascript:void(0);" class="nav-link active">
+                </th:block>
+                <th:block th:unless="${#strings.startsWith(session.menuActive,'43')}">
+                    <li class="nav-item has-treeview">
+                        <a  href="javascript:void(0);" class="nav-link">
+                </th:block>
+                <i class="nav-icon fas fa-file-alt"></i>
+                <p>
+                    日志监控
+                    <i class="fas fa-angle-left right"></i>
+                </p>
+                </a>
+                <ul class="nav nav-treeview">
                     <li class="nav-item">
-                        <th:block th:if="${session.menuActive eq '43'}">
-                            <a th:href="@{'/logMonitor/list'}" class="nav-link active">
+                        <th:block th:if="${session.menuActive eq '431'}">
+                            <a th:href="@{'/logMonitor/ssh/list'}" class="nav-link active">
                         </th:block>
-                        <th:block th:unless="${session.menuActive eq '43'}">
-                            <a th:href="@{'/logMonitor/list'}" class="nav-link">
+                        <th:block th:unless="${session.menuActive eq '431'}">
+                            <a th:href="@{'/logMonitor/ssh/list'}" class="nav-link">
                         </th:block>
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <p>日志监控</p>
+                        <i class="fas fa-lock nav-icon"></i>
+                        <p>SSH日志监控</p>
                         </a>
                     </li>
-
+                    <li class="nav-item">
+                        <th:block th:if="${session.menuActive eq '432'}">
+                            <a th:href="@{'/logMonitor/nginx/list'}" class="nav-link active">
+                        </th:block>
+                        <th:block th:unless="${session.menuActive eq '432'}">
+                            <a th:href="@{'/logMonitor/nginx/list'}" class="nav-link">
+                        </th:block>
+                        <i class="fas fa-server nav-icon"></i>
+                        <p>Nginx日志监控</p>
+                        </a>
+                    </li>
                 </ul>
                 </li>
 

@@ -73,9 +73,19 @@ public class LogMonitorController {
         return "";
     }
 
-    @RequestMapping("list")
-    public String list(LogMonitor logMonitor, Model model, HttpServletRequest request) {
+    @RequestMapping("ssh/list")
+    public String sshList(LogMonitor logMonitor, Model model, HttpServletRequest request) {
+        return list("ssh", logMonitor, model, request);
+    }
+
+    @RequestMapping("nginx/list")
+    public String nginxList(LogMonitor logMonitor, Model model, HttpServletRequest request) {
+        return list("nginx", logMonitor, model, request);
+    }
+
+    private String list(String monitorType, LogMonitor logMonitor, Model model, HttpServletRequest request) {
         Map<String, Object> params = new HashMap<String, Object>();
+        params.put("monitorType", monitorType);
         try {
             List<SystemInfo> systemInfoList = systemInfoService.selectAllByParams(new HashMap<>());
             model.addAttribute("systemInfoList", systemInfoList);
@@ -107,20 +117,26 @@ public class LogMonitorController {
             }
             PageInfo pageInfo = logMonitorService.selectByParams(params, logMonitor.getPage(), logMonitor.getPageSize());
             PageUtil.initPageNumber(pageInfo, model);
-            model.addAttribute("pageUrl", "/logMonitor/list?1=1" + url.toString());
+            model.addAttribute("pageUrl", "/logMonitor/" + monitorType + "/list?1=1" + url.toString());
             model.addAttribute("page", pageInfo);
             model.addAttribute("logMonitor", logMonitor);
+            model.addAttribute("monitorType", monitorType);
         } catch (Exception e) {
             logger.error("查询日志监控错误", e);
             logInfoService.save("查询日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
         }
-        return "log/list";
+        return "log/" + monitorType + "/list";
     }
 
     @RequestMapping("save")
     public String save(LogMonitor logMonitor, Model model, HttpServletRequest request) {
+        String monitorType = logMonitor.getMonitorType();
+        if (StringUtils.isEmpty(monitorType)) {
+            monitorType = "ssh";
+        }
         try {
             if (StringUtils.isEmpty(logMonitor.getId())) {
+                logMonitor.setMonitorType(monitorType);
                 logMonitorService.save(logMonitor);
             } else {
                 logMonitorService.updateById(logMonitor);
@@ -129,11 +145,20 @@ public class LogMonitorController {
             logger.error("保存日志监控错误", e);
             logInfoService.save(logMonitor.getHostname(), "保存日志监控错误：" + e.toString(), StaticKeys.LOG_ERROR);
         }
-        return "redirect:/logMonitor/list";
+        return "redirect:/logMonitor/" + monitorType + "/list";
     }
 
-    @RequestMapping("edit")
-    public String edit(Model model, HttpServletRequest request) {
+    @RequestMapping("ssh/edit")
+    public String sshEdit(Model model, HttpServletRequest request) {
+        return edit("ssh", model, request);
+    }
+
+    @RequestMapping("nginx/edit")
+    public String nginxEdit(Model model, HttpServletRequest request) {
+        return edit("nginx", model, request);
+    }
+
+    private String edit(String monitorType, Model model, HttpServletRequest request) {
         String id = request.getParameter("id");
         LogMonitor logMonitor = new LogMonitor();
         try {
@@ -141,17 +166,29 @@ public class LogMonitorController {
             model.addAttribute("systemInfoList", systemInfoList);
             if (!StringUtils.isEmpty(id)) {
                 logMonitor = logMonitorService.selectById(id);
+            } else {
+                logMonitor.setMonitorType(monitorType);
             }
             model.addAttribute("logMonitor", logMonitor);
+            model.addAttribute("monitorType", monitorType);
         } catch (Exception e) {
             logger.error("编辑日志监控错误", e);
             logInfoService.save("编辑日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
         }
-        return "log/add";
+        return "log/" + monitorType + "/add";
     }
 
-    @RequestMapping("del")
-    public String delete(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @RequestMapping("ssh/del")
+    public String sshDelete(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        return delete("ssh", model, request, redirectAttributes);
+    }
+
+    @RequestMapping("nginx/del")
+    public String nginxDelete(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        return delete("nginx", model, request, redirectAttributes);
+    }
+
+    private String delete(String monitorType, Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 logMonitorService.deleteById(request.getParameter("id").split(","));
@@ -160,6 +197,6 @@ public class LogMonitorController {
             logger.error("删除日志监控错误", e);
             logInfoService.save("删除日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
         }
-        return "redirect:/logMonitor/list";
+        return "redirect:/logMonitor/" + monitorType + "/list";
     }
 }
