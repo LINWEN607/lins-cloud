@@ -4,62 +4,55 @@
 	<base href="./" th:href="'/'"/>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>LINS监控系统</title>
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/components.css'}" />
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/fix.css'}" />
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/suri-bootstrap.css'}" />
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/bootstrap.min.css'}" />
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/font-awesome.min.css'}" />
-<link type="text/css" rel="stylesheet" th:href="@{'/static/logincss/ionicons.min.css'}" />
-<!-- atmosfero.css removed (conflicts with apple-theme) -->
-
 <link rel="shortcut icon" type="image/x-icon" th:href="@{'/static/logincss/favicon.png'}"/>
 <link rel="stylesheet" th:href="@{'/static/css/apple-theme.css'}">
 <script>document.documentElement.classList.add('dark-mode');document.documentElement.style.colorScheme='dark'</script>
-		
 </head>
 <body class="login-page">
 
-<div class="login-box">
-		<div class="login-box-content">
-			<div class="login-logo">
-            <img width="60" height="60" th:src="@{'/static/logincss/logo.png'}"><span  style="margin-left:5px;color:#fff;font-size:16px;font-weight:bold">LINS</span>
-	  		</div>
-			<div class="login-box-body">
-                
-		<form id="form1" th:action="@{'/login/login'}"  method="post" onsubmit="setMd5Pwd()" class="form-horizontal">
-	
-          	<div class="form-group">
-           	<div class="col-sm-12">
-              		<input id="userName" name="userName" placeholder="输入账号" maxlength="50" autocomplete="off" class="validate[required] form-control" type="text">
-            	</div>
-          	</div>
-          	
-          	<div class="form-group">
-           	<div class="col-sm-12">
-              		<input placeholder='输入密码' id="passwd" name="passwd" maxlength="20" class="validate[required] form-control" autocomplete="off" type="password">
-              		<input type="hidden" id="md5pwd" name="md5pwd" value=""/>
-            	</div>
-          	</div>
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <img width="120" height="120" th:src="@{'/static/logincss/logo.png'}" class="login-logo-img">
+        </div>
 
-			<div class="form-group"  style="color:red;font-weight:bold;text-align: center;" th:text="${error}"></div>
+        <form id="form1" th:action="@{'/login/login'}" method="post" onsubmit="setMd5Pwd()" class="login-form">
 
-         	<div class="form-group">
-           	<div class="col-sm-12">
-           		<input value="登录" class="btn btn-primary btn-block" type="submit">
-            	</div>
-          	</div>
-             	
-          	<div class="form-group">
-          	</div>
-		</form>
-		</div>
-		</div>
-	</div>
+            <div class="login-input-wrap">
+                <span class="login-input-icon">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <input id="userName" name="userName" placeholder="输入账号" maxlength="50" autocomplete="off" class="validate[required] login-input" type="text">
+            </div>
 
+            <div class="login-input-wrap">
+                <span class="login-input-icon">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                <input placeholder="输入密码" id="passwd" name="passwd" maxlength="20" class="validate[required] login-input" autocomplete="off" type="password">
+                <span class="login-pwd-toggle" onclick="togglePassword()" title="显示/隐藏密码">
+                    <svg id="eye-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </span>
+                <input type="hidden" id="md5pwd" name="md5pwd" value=""/>
+            </div>
 
+            <div class="login-error" th:text="${error}"></div>
 
+            <div class="login-options">
+                <label class="login-remember">
+                    <input type="checkbox" checked> 保持登录状态
+                </label>
+                <a href="javascript:;" class="login-forgot">忘记密码</a>
+            </div>
 
-    <link rel="stylesheet" th:href="@{'/static/js/jQuery/validationEngine.jquery.css'}" type="text/css"/>
+            <button type="submit" class="login-btn">登录</button>
+
+        </form>
+
+        <div class="login-footer">登录即表示同意《用户协议》《隐私政策》</div>
+    </div>
+</div>
+
     <script th:src="@{'/static/js/jQuery/jquery-3.2.0.min.js'}"></script>
     <script th:src="@{'/static/js/jQuery/jquery.validationEngine-zh_CN.js'}" type="text/javascript" charset="utf-8"></script>
     <script th:src="@{'/static/js/jQuery/jquery.validationEngine.js'}" type="text/javascript" charset="utf-8"></script>
