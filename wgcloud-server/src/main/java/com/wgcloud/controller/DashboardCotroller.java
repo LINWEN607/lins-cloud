@@ -182,7 +182,7 @@ public class DashboardCotroller {
 
             PageInfo pageInfoDbTableList = dbTableService.selectByParams(params, 1, 10);
             List<Map<String, Object>> dbTableChartData = new ArrayList<>();
-            for (DbTable dt : pageInfoDbTableList.getList()) {
+            for (DbTable dt : (List<DbTable>) pageInfoDbTableList.getList()) {
                 Map<String, Object> item = new HashMap<>();
                 try {
                     DbInfo dbInfo = dbInfoService.selectById(dt.getDbInfoId());
@@ -190,7 +190,7 @@ public class DashboardCotroller {
                         ? dbInfo.getAliasName()
                         : (dbInfo != null ? dbInfo.getIp() : dt.getDbInfoId());
                     item.put("showName", dbName + "\n" + dt.getTableName());
-                } catch (Exception e) {
+                } catch (Exception ex) {
                     item.put("showName", dt.getTableName());
                 }
                 item.put("value", dt.getTableCount());
