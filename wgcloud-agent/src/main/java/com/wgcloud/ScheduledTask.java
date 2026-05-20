@@ -212,7 +212,6 @@ public class ScheduledTask {
                         String key = lm.getId();
                         Long lastPos = logFilePositions.get(key);
                         if (lastPos == null) {
-                            lastPos = 0L;
                             long fileLen = logFile.length();
                             lastPos = fileLen;
                         }
@@ -236,7 +235,7 @@ public class ScheduledTask {
                                 logMatchArray.add(match);
                             }
                         }
-                        logFilePositions.put(key, raf.getFilePointer());
+                        logFilePositions.put(key, logFile.length());
                         raf.close();
                     } catch (Exception e) {
                         logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
