@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @version v2.3
@@ -43,6 +45,7 @@ public class AgentController {
     private static final Logger logger = LoggerFactory.getLogger(AgentController.class);
     private static final Map<String, Long> logMatchDedupCache = new ConcurrentHashMap<>();
     private static final long DEDUP_WINDOW_MS = 300_000L;
+    private static final Pattern SRC_IP_PATTERN = Pattern.compile("from\\s+(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})", Pattern.CASE_INSENSITIVE);
 
     ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 40, 2, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
 
@@ -163,6 +166,7 @@ public class AgentController {
                     logger.error("查询主机信息错误", e);
                 }
                 Map<String, Integer> typeCounts = new LinkedHashMap<>();
+                Map<String, Set<String>> typeIps = new LinkedHashMap<>();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
                     String hostname = match.getStr("hostname");
@@ -175,6 +179,10 @@ public class AgentController {
                     logMatchDedupCache.put(hash, now);
                     String groupKey = hostname + "|" + logFilePath + "|" + matchedType;
                     typeCounts.merge(groupKey, 1, Integer::sum);
+                    Matcher m = SRC_IP_PATTERN.matcher(matchedLine);
+                    if (m.find()) {
+                        typeIps.computeIfAbsent(groupKey, k -> new LinkedHashSet<>()).add(m.group(1));
+                    }
                     LogInfo li = new LogInfo();
                     li.setId(com.wgcloud.util.UUIDUtil.getUUID());
                     li.setHostname(hostname);
@@ -189,7 +197,8 @@ public class AgentController {
                     String matchedType = parts[2];
                     int count = entry.getValue();
                     String remark = hostnameRemarkMap.get(hostname);
-                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, count);
+                    Set<String> ips = typeIps.get(entry.getKey());
+                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, count, ips);
                 }
             }
             resultJson.put("result", "success");

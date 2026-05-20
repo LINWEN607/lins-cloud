@@ -18,7 +18,6 @@ import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PostConstruct;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,11 +39,7 @@ public class ScheduledTask {
     public static List<LogMonitor> logMonitorList = Collections.synchronizedList(new ArrayList<LogMonitor>());
     private static Map<String, Long> logFilePositions = new ConcurrentHashMap<>();
     private static final String POSITIONS_FILE = "/app/log/log_positions.json";
-
-    @PostConstruct
-    public void init() {
-        loadLogPositions();
-    }
+    private boolean positionsLoaded = false;
 
     @Autowired
     private RestUtil restUtil;
@@ -78,6 +73,10 @@ public class ScheduledTask {
         logInfo.setHostname(commonConfig.getBindIp() + "：Agent错误");
         logInfo.setCreateTime(t);
         try {
+            if (!positionsLoaded) {
+                loadLogPositions();
+                positionsLoaded = true;
+            }
             oshi.SystemInfo si = new oshi.SystemInfo();
 
             HardwareAbstractionLayer hal = si.getHardware();

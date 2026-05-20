@@ -296,7 +296,7 @@ public class WarnMailUtil {
         return false;
     }
 
-    public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedType, int count) {
+    public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedType, int count, Set<String> sourceIps) {
         try {
             String displayName = StringUtils.isEmpty(remark) ? hostname : remark;
             String now = DateUtil.getNowTime().toString().substring(0, 19);
@@ -316,6 +316,9 @@ public class WarnMailUtil {
                 typeLabel = "自定义匹配";
             }
             sb.append(typeLabel).append(" ").append(count).append(" 次");
+            if (sourceIps != null && !sourceIps.isEmpty()) {
+                sb.append("\n").append("来源IP：").append(String.join("、", sourceIps));
+            }
             String commContent = sb.toString().trim();
             sendToAllChannels(title, commContent);
             logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
