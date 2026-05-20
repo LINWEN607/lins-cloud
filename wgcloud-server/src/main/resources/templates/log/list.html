@@ -76,8 +76,8 @@
                             <td th:text="${iterStat.index+1}"></td>
                             <td th:text="${item.hostname}"></td>
                             <td th:text="${item.infoContent}"></td>
-                            <td th:text="${item.state}"></td>
-                            <td th:text="${#dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss')}"></td>
+                            <td th:text="${item.state != null ? item.state : '-'}"></td>
+                            <td th:text="${item.createTime != null ? #dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
                             <td>
                               <button type="button" th:onclick="view([[${item.id}]])" class="btn bg-gradient-primary btn-sm">查看</button>
                             </td>
