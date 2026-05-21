@@ -49,6 +49,7 @@ public class ScheduledTask {
     private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for", Pattern.CASE_INSENSITIVE);
     private static final Pattern SSH_FAILURE_PATTERN = Pattern.compile("Failed\\s+password\\s+for", Pattern.CASE_INSENSITIVE);
     private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("Disconnected\\s+from\\s+user", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SSH_USER_PATTERN = Pattern.compile("(?:for|user)\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
 
 
     /**
@@ -225,6 +226,10 @@ public class ScheduledTask {
                                     match.put("logFilePath", lm.getLogFilePath());
                                     match.put("matchedLine", lineStr);
                                     match.put("matchedType", matchedType);
+                                    Matcher userMatcher = SSH_USER_PATTERN.matcher(lineStr);
+                                    if (userMatcher.find()) {
+                                        match.put("matchedUser", userMatcher.group(1));
+                                    }
                                     logMatchArray.add(match);
                                 }
                             }

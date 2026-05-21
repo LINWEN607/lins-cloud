@@ -171,6 +171,7 @@ public class AgentController {
                     String logFilePath = match.getStr("logFilePath");
                     String matchedLine = match.getStr("matchedLine");
                     String matchedType = match.getStr("matchedType");
+                    String matchedUser = match.getStr("matchedUser");
                     String dedupKey = hostname + "|" + logFilePath + "|" + matchedLine;
                     String hash = sha1Hex(dedupKey);
                     if (logMatchDedupCache.containsKey(hash)) continue;
@@ -179,7 +180,7 @@ public class AgentController {
                     Matcher m = SRC_IP_PATTERN.matcher(matchedLine);
                     if (m.find()) ips.add(m.group(1));
                     String remark = hostnameRemarkMap.get(hostname);
-                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, 1, ips);
+                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, 1, ips, matchedUser);
                     LogInfo li = new LogInfo();
                     li.setId(com.wgcloud.util.UUIDUtil.getUUID());
                     li.setHostname(hostname);
