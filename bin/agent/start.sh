@@ -1,5 +1,5 @@
 #!/bin/sh
-RUN_NAME="wgcloud-agent-release.jar"
+RUN_NAME="lins-agent-release.jar"
 export LANG="en_US.UTF-8"
 PRG=$0
 APPDIRFILE=`dirname "$PRG"`

@@ -1,0 +1,19 @@
+services:
+  agent:
+    image: lins-agent:latest
+    pid: host                   # ← 新增：共享宿主 PID 命名空间
+    privileged: true
+    network_mode: "host"
+    environment:
+      - TZ=Asia/Shanghai
+      - base.serverUrl=http://192.168.31.195:9999
+      - base.bindIp=192.168.31.195
+      - base.wgToken=lins
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc:/host/etc:ro
+      - /data/lins/agent/logs:/app/log
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run:/var/run:ro
+      - /var/log:/var/log:ro
