@@ -15,6 +15,9 @@ import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +41,7 @@ public class ScheduledTask {
     private Logger logger = LoggerFactory.getLogger(ScheduledTask.class);
     public static List<AppInfo> appInfoList = Collections.synchronizedList(new ArrayList<AppInfo>());
     public static List<LogMonitor> logMonitorList = Collections.synchronizedList(new ArrayList<LogMonitor>());
-    private static Map<String, Long> logFileSizes = new ConcurrentHashMap<>();
+    private static Map<Object, Long> _positions = new ConcurrentHashMap<>();
 
     @Autowired
     private RestUtil restUtil;
@@ -196,7 +199,7 @@ public class ScheduledTask {
                 logger.error("采集容器状态失败", e);
             }
 
-            // log monitor
+            // log monitor — inode + offset 追踪，永不重复
             if (LOG_MONITOR_LIST_CP.size() > 0) {
                 JSONArray logMatchArray = new JSONArray();
                 for (LogMonitor lm : LOG_MONITOR_LIST_CP) {
@@ -205,16 +208,27 @@ public class ScheduledTask {
                     try {
                         File logFile = new File(lm.getLogFilePath());
                         if (!logFile.exists() || !logFile.isFile()) continue;
-                        String key = lm.getId();
-                        long currentSize = logFile.length();
-                        Long lastSize = logFileSizes.get(key);
-                        if (lastSize == null) {
-                            logFileSizes.put(key, currentSize);
+                        Path path = logFile.toPath();
+                        BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+                        Object fileKey = attrs.fileKey();
+                        if (fileKey == null) {
+                            fileKey = logFile.getAbsolutePath();
+                        }
+                        long fileLen = logFile.length();
+                        Long offset = _positions.get(fileKey);
+                        if (offset == null) {
+                            // 首次见到此 inode：跳到末尾，跳过历史内容
+                            _positions.put(fileKey, fileLen);
                             continue;
                         }
-                        if (currentSize > lastSize) {
+                        if (offset > fileLen) {
+                            // 文件被截断/轮转：inode 不变但内容缩减，重置到末尾
+                            offset = fileLen;
+                            _positions.put(fileKey, fileLen);
+                        }
+                        if (fileLen > offset) {
                             RandomAccessFile raf = new RandomAccessFile(logFile, "r");
-                            raf.seek(lastSize);
+                            raf.seek(offset);
                             String line;
                             while ((line = raf.readLine()) != null) {
                                 if (line.trim().length() == 0) continue;
@@ -235,8 +249,8 @@ public class ScheduledTask {
                                 }
                             }
                             raf.close();
+                            _positions.put(fileKey, logFile.length());
                         }
-                        logFileSizes.put(key, currentSize);
                     } catch (Exception e) {
                         logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
                     }
