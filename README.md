@@ -1,117 +1,232 @@
 <p align="center">
-  <a  target="_blank" href="http://www.wgstart.com">
-    <img src="./demo/logo.png">
-  </a>
- </p>
+  <img src="./demo/logo.png">
+</p>
 
+# LINS 监控系统
 
+LINS 采用 **Server-Agent** 微服务架构（SpringBoot），每个监控指标通过 HTTP JSON 由 Agent 上报至 Server，具备全自动发现、零模板脚本、快速部署的特点。
 
-## WGCLOUD介绍
+---
 
-WGCLOUD设计思想为新一代极简运维监控系统，提倡快速部署，降低运维学习难度，全自动化运行，无模板和脚本。
+## 功能总览
 
-**当前仓库为开源版本v2.3.7最新，二次开发请拉取master分支即可**。
+| 类别 | 功能 |
+|---|---|
+| **主机监控** | CPU 使用率 & 温度、内存使用率、磁盘容量 & IO、硬盘 SMART 健康状态、系统负载、连接数、网卡流量、操作系统/硬件信息 |
+| **进程监控** | 监测服务器上指定进程是否存在、CPU/内存占用 |
+| **端口监控** | 监测 TCP 端口连通性 |
+| **日志监控** | 实时匹配 SSH 登录/登出/失败日志，提取用户名与来源 IP，5 分钟去重，推送告警 |
+| **文件防篡改** | 监测关键文件变更（通过磁盘状态上报） |
+| **容器监控** | 自动发现并监控 Docker 容器状态 |
+| **数据库监控** | 连接检查 + 数据表行数趋势监控 |
+| **服务接口监控** | 监测 HTTP API 接口可用性 |
+| **数通设备监控** | 监测交换机、路由器、打印机等 SNMP 设备 |
+| **告警推送** | 邮件、钉钉、飞书、微信等（支持 CPU/内存/主机下线/进程下线/容器下线/日志匹配告警） |
+| **大屏可视化** | 数据看板、趋势图表、统计分析 |
+| **网络拓扑** | 自动生成网络拓扑图 |
+| **Web SSH** | 浏览器端堡垒机（基于 ganymed-ssh2） |
+| **批量指令** | 批量下发 shell/cmd 指令 |
 
-WGCLOUD基于微服务springboot架构开发，是轻量高性能的分布式监控系统，核心采集指标包括：**cpu使用率，cpu温度，内存使用率，磁盘容量，磁盘IO，硬盘SMART健康状态，系统负载，连接数量，网卡流量，硬件系统信息等。支持监测服务器上的进程应用、文件防篡改、端口、日志、DOCKER容器、数据库、数据表等资源。支持监测服务接口API、数通设备（如交换机、路由器、打印机）等。自动生成网络拓扑图，大屏可视化，web SSH（堡垒机），统计分析图表，指令下发批量执行，告警信息推送（如邮件、钉钉、微信、短信等）**。[English Readme](<./README_en.md>)
+---
 
-1.v2.3.7放弃了之前版本的sigar方式获取主机指标，采用流行的OSHI组件来采集主机指标。
+## 架构说明
 
-2.采用服务端和代理端协同工作方式，更轻量，更高效，可支持数千台主机同时在线监控。
+```
+┌────────────────────────────────────────────────────┐
+│                    LINS Server                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │Dashboard  │  │ 告警模块  │  │  Agent HTTP API   │  │
+│  │Controller │  │WarnMail  │  │  (接收上报数据)   │  │
+│  └──────────┘  └──────────┘  └────────┬─────────┘  │
+│                                       │              │
+│  ┌────────────────────────────────────┴──────────┐  │
+│  │           BatchData 缓冲队列                     │  │
+│  │  CPU/MEM/Disk/Net/SysLoad/App/Log/Container   │  │
+│  └────────────────────────────────────┬──────────┘  │
+│                                       │              │
+│  ┌────────────────────────────────────┴──────────┐  │
+│  │            Service / Mapper / DB               │  │
+│  └───────────────────────────────────────────────┘  │
+└──────────────────────┬─────────────────────────────┘
+                       │ HTTP POST /agent/minTask
+                       │ (每2分钟, JSON)
+┌──────────────────────┴─────────────────────────────┐
+│                 LINS Agent (N 台主机)               │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  ScheduledTask (OSHI 采集)                    │  │
+│  │  CPU / MEM / Disk / Net / Load / Process/Log │  │
+│  └──────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────┘
+```
 
-3.server端负责接受数据，处理数据，生成图表展示。agent端默认每隔2分钟(时间可调)上报主机指标数据。
+### 通信协议
 
-4.支持主流服务器平台安装部署，如Linux, Windows,macOS,Unix等。
+- Agent 每 **120 秒**（可配置）通过 **HTTP POST** 向 Server 的 `/agent/minTask` 上报 JSON
+- Token（`wgToken`）校验身份
+- Server 异步落库 + 实时告警判定
+- 日志匹配服务端有 **5 分钟去重缓存**（SHA-1 指纹）
 
-5.WGCLOUD采用主流技术框架SpringBoot+Bootstrap，完美实现了分布式监控系统，为反哺开源社区，二次开源。
+---
 
-6.**当前仓库为开源版，v3.x版本为商业版（免费不开源哈），生产环境建议部署商业版**，商业版功能、性能更优秀
+## 技术栈
 
-7.如果你觉得WGCLOUD帮助到了你，不用打赏我们，star支持下就好了。
+| 组件 | 技术 |
+|---|---|
+| 后端框架 | Spring Boot 2.6.6 |
+| 前端 | Thymeleaf + Bootstrap + AdminLTE + ECharts |
+| 数据库 | MySQL 5.7+ / MariaDB / PostgreSQL |
+| ORM | MyBatis + PageHelper |
+| 主机信息采集 | OSHI（替代旧版 SIGAR） |
+| SSH | Ganymed SSH-2 |
+| 构建 | Maven |
+| 容器化 | Docker + Docker Compose |
+| JDK | 1.8 |
 
-8.关于分享，开源的初衷在于分享学习，如果可以的话，请在您的博客、网站上（如果有的话）帮忙加个[WGCLOUD](http://www.wgstart.com)链接或写个帖子分享给其他人，帮助WGCLOUD学习进步。最后若您愿意的话，可以将您单位名称通过邮件发来给我们，我们将展示到WGCLOUD网站的【感谢】栏目。
+---
 
-## **网站**
+## 快速开始（Docker）
 
-<http://www.wgstart.com>
+### 1. 构建 Server 镜像
 
-## **Github(3.0k⭐)**
+```bash
+cd lins-server
+# 使用阿里云 Maven 镜像加速（settings.xml 已配置）
+docker build -t lins-server:latest .
+```
 
-<https://github.com/tianshiyeben/wgcloud>
+### 2. 启动 Server + MySQL
 
-## **视频**
+```bash
+cd lins-server
+# 确保宿主机 3306 端口未被占用
+# 将 sql/cloud.sql 复制到 /data/lins/server/lins.sql
+docker compose up -d
+```
 
-B站WGCLOUD相关视频地址，<https://space.bilibili.com/549621501/video>
+访问 `http://<host>:9999/lins`，默认账号密码 `admin / 111111`。
 
-## **源码使用**
+### 3. 构建 Agent 镜像
 
-1.使用IDEA的话（推荐），直接打开wgcloud-server和wgcloud-agent即可，JDK使用1.8
+```bash
+cd lins-agent
+docker build -t lins-agent:latest .
+```
 
-2.使用Eclipse的话，导入maven工程wgcloud-server和wgcloud-agent即可，JDK使用1.8
+### 4. 部署 Agent（每台监控主机）
 
-3.运行所需sql脚本（本项目使用mysql数据库），在sql文件夹下，在mysql数据库里创建数据库wgcloud，导入wgcloud.sql即可
+修改 `application.yml`：
 
-4.bin目录下的脚本文件，为server和agent启动/停止脚本（linux和windows），和打包好的wgcloud-server-release.jar放到同一个目录下即可。
+```yaml
+base:
+  serverUrl: http://<server-ip>:9999
+  bindIp: <本机真实IP, 勿用127.0.0.1>
+  wgToken: lins  # 与 server 一致
+```
 
-## **功能截图**
+启动 Agent：
 
+```bash
+docker run -d --name lins-agent \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -p 9998:9998 \
+  lins-agent:latest
+```
 
+> Agent 容器内需要访问宿主机 Docker（`docker.sock` 挂载）以采集容器状态。
 
-![WGCLOUD监控主面板](./demo/demo2.jpg)
+---
 
-![WGCLOUD监控主机列表](./demo/demo3.jpg)
+## 配置文件说明
 
-![WGCLOUD监控主机磁盘信息](./demo/demo9.jpg)
+### Server `application.yml`
 
-![WGCLOUD监控主机告警报表](./demo/report.jpg)
+| 配置项 | 说明 | 默认值 |
+|---|---|---|
+| `server.port` | Server HTTP 端口 | 9999 |
+| `server.servlet.context-path` | 上下文路径 | /lins |
+| `base.admindPwd` | admin 登录密码 | 111111 |
+| `base.wgToken` | 通信 Token，Agent 端需一致 | lins |
+| `base.dbTableTimes` | 数据表监控间隔 | 3600000 (1h) |
+| `base.heathTimes` | 服务接口监控间隔 | 600000 (10min) |
+| `mail.allWarnMail` | 告警总开关 | yes |
+| `mail.memWarnVal` | 内存告警阈值 | 98% |
+| `mail.cpuWarnVal` | CPU 告警阈值 | 98% |
 
-![WGCLOUD监控主机大屏](./demo/dp.jpg)
+### Agent `application.yml`
 
-![WGCLOUD监控主机状态趋势图](./demo/demo4.jpg)
+| 配置项 | 说明 | 默认值 |
+|---|---|---|
+| `server.port` | Agent HTTP 端口 | 9998 |
+| `server.servlet.context-path` | 上下文路径 | /lins-agent |
+| `base.serverUrl` | Server 地址 | http://localhost:9999 |
+| `base.bindIp` | 本机真实 IP | 192.168.1.2 |
+| `base.wgToken` | 通信 Token | lins |
 
+---
 
+## 核心采集指标
 
-![WGCLOUD网络拓扑图](./demo/tpdemo.jpg)
+Agent 每次上报的 JSON 结构包含以下对象和数组：
 
-![WGCLOUD主机web ssh客户端图](./demo/ssh.jpg)
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `cpuState` | Object | CPU 使用率、温度、频率 |
+| `memState` | Object | 内存总量/已用/可用/使用率 |
+| `sysLoadState` | Object | 系统负载 1/5/15 分钟 |
+| `netIoState` | Object | 网卡收发字节/包量 |
+| `systemInfo` | Object | 主机名、IP、OS、CPU 型号、磁盘分区 |
+| `deskStateList` | Array | 磁盘使用率（每个分区） |
+| `appInfoList` | Array | 进程列表及资源占用 |
+| `appStateList` | Array | 进程存活状态 |
+| `containerStateList` | Array | Docker 容器状态 |
+| `logMonitorMatch` | Array | 日志匹配结果（SSH 事件） |
+| `logInfo` | Object | Agent 端错误日志 |
 
-![WGCLOUD主机画像图](./demo/huaxiang.jpg)
+---
 
-## 通信图示例（http协议）
+## 告警规则
 
-![WGCLOUD通信图示例](./demo/tongxin.jpg)
+Server 端在接收数据时进行实时判定，触发以下告警时立即推送：
 
-## 运行环境
+| 告警类型 | 判定条件 | 推送方式 |
+|---|---|---|
+| CPU 告警 | CPU 使用率 > `cpuWarnVal` | async 线程池 |
+| 内存告警 | 内存使用率 > `memWarnVal` | async 线程池 |
+| 主机下线 | 超过 5 分钟未收到上报 | 定时扫描 |
+| 进程下线 | 进程不在运行状态 | 对比 appInfo |
+| 容器下线 | 容器状态异常 | 对比 containerState |
+| 日志匹配 | SSH 登录/登出/失败日志 | 5min 去重 |
 
-1.JDK版本：JDK1.8、JDK11
+---
 
-2.数据库：MySql5.5及以上、MariaDB、PostgreSQL
+## 项目结构
 
-3.支持系统平台
-
-> 支持监测Linux系列：Debian、RedHat、CentOS、ubuntu、麒麟、统信、龙芯、树莓派等
->
-> 支持监测windows系列：Windows Server 2008 R2，2012，2016，2019，Windows 7，Windows 8，Windows 10
->
-> 支持监测unix系列：solaris，FreeBSD，OpenBSD
->
-> 支持监测macOS系列：macOS amd64
->
-> 支持检测Android（安卓）：arm32，arm64
-
-
-
-## 联系
-
-邮箱：tianshiyeben@qq.com
-
-## 为什么没有QQ群
-
-这个以前是有的，但是我们发现QQ群并不能有利于问题分享给更多人知晓，因此我们解散了qq群。
-
-但是大家若有什么问题可以提交ISSUES或者给我们发送邮件，ISSUES因为不长时间在线也没有提示（回复慢些），邮件会看到提示（回复快些，一般1-2小时回复）
-
-所有大家经常使用中遇见的疑问或问题，我们一直在整理，并展示到网站的【常见问题】，也会写到博客论坛，因此大部分问题都可以搜索引擎得到答案
-
-## 感谢
-
-JetBrains提供的免费license
+```
+lins/
+├── lins-server/           # 服务端
+│   ├── src/main/java/com/lins/
+│   │   ├── controller/    # 控制器(18个)
+│   │   ├── service/       # 业务逻辑(24个)
+│   │   ├── mapper/        # MyBatis DAO
+│   │   ├── entity/        # 数据模型
+│   │   ├── dto/           # 数据传输对象
+│   │   ├── task/          # 定时任务
+│   │   ├── filter/        # 过滤器
+│   │   └── common/        # 公共组件
+│   ├── src/main/resources/
+│   │   ├── mybatis/mapper/ # SQL XML
+│   │   ├── static/         # 前端静态资源
+│   │   └── application.yml
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── lins-agent/            # Agent端
+│   ├── src/main/java/com/lins/
+│   │   ├── entity/        # 数据模型(与server共享)
+│   │   ├── ScheduledTask.java  # 核心采集(OSHI + 日志)
+│   │   └── RestUtil.java       # HTTP上报
+│   ├── src/main/resources/application.yml
+│   └── Dockerfile
+├── sql/                   # 数据库初始化脚本
+├── bin/                   # 启动/停止脚本
+└── demo/                  # 功能截图
+```
