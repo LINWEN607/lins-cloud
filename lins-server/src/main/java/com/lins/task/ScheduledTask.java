@@ -181,6 +181,16 @@ public class ScheduledTask {
                 List<AppInfo> updateList = new ArrayList<AppInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (AppInfo appInfo : list) {
+                    // 主机存活预检：主机最近上报过则跳过进程下线判定（防重启误报）
+                    Map<String, Object> hostParam = new HashMap<String, Object>();
+                    hostParam.put("hostname", appInfo.getHostname());
+                    List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
+                    if (!CollectionUtil.isEmpty(hosts)) {
+                        Date hostTime = hosts.get(0).getCreateTime();
+                        if (date.getTime() - hostTime.getTime() < delayTime) {
+                            continue;
+                        }
+                    }
 
                     Date createTime = appInfo.getCreateTime();
                     long diff = date.getTime() - createTime.getTime();
@@ -226,6 +236,17 @@ public class ScheduledTask {
                 List<ContainerInfo> updateList = new ArrayList<ContainerInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (ContainerInfo containerInfo : list) {
+                    // 主机存活预检：主机最近上报过则跳过容器下线判定（防重启误报）
+                    Map<String, Object> hostParam = new HashMap<String, Object>();
+                    hostParam.put("hostname", containerInfo.getHostname());
+                    List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
+                    if (!CollectionUtil.isEmpty(hosts)) {
+                        Date hostTime = hosts.get(0).getCreateTime();
+                        if (date.getTime() - hostTime.getTime() < delayTime) {
+                            continue;
+                        }
+                    }
+
                     Map<String, Object> stateParams = new HashMap<String, Object>();
                     stateParams.put("hostname", containerInfo.getHostname());
                     stateParams.put("containerName", containerInfo.getContainerName());
