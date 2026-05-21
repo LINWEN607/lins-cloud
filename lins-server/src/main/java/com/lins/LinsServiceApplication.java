@@ -1,8 +1,10 @@
 package com.lins;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -15,12 +17,14 @@ import org.springframework.web.client.RestTemplate;
 import java.nio.charset.Charset;
 
 @SpringBootApplication
+@MapperScan("com.lins.mapper")
+@ServletComponentScan("com.lins.filter")
 @ComponentScan(basePackages = "com.lins")
 @EnableCaching
 @EnableScheduling
-public class WgcloudServiceApplication {
+public class LinsServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(WgcloudServiceApplication.class, args);
+        SpringApplication.run(LinsServiceApplication.class, args);
     }
 
     @Bean
@@ -33,7 +37,7 @@ public class WgcloudServiceApplication {
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-        taskScheduler.setPoolSize(10);
+        taskScheduler.setPoolSize(50);
         return taskScheduler;
     }
 
