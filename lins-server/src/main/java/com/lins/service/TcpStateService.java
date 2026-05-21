@@ -1,11 +1,11 @@
-package com.wgcloud.service;
+package com.lins.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.wgcloud.entity.TcpState;
-import com.wgcloud.mapper.TcpStateMapper;
-import com.wgcloud.util.DateUtil;
-import com.wgcloud.util.UUIDUtil;
+import com.lins.entity.TcpState;
+import com.lins.mapper.TcpStateMapper;
+import com.lins.util.DateUtil;
+import com.lins.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
