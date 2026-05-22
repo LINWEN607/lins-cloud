@@ -124,10 +124,10 @@ public class ScheduledTask {
      * 300秒后执行
      * 检测主机是否已经下线，检测进程是否下线
      */
-    @Scheduled(initialDelay = 300000L, fixedRate = 20 * 60 * 1000)
+    @Scheduled(initialDelay = 300000L, fixedRate = 5 * 60 * 1000)
     public void hostDownCheckTask() {
         Date date = DateUtil.getNowTime();
-        long delayTime = 900 * 1000;
+        long delayTime = 300 * 1000;
 
         try {
             Map<String, Object> params = new HashMap<String, Object>();
@@ -181,13 +181,13 @@ public class ScheduledTask {
                 List<AppInfo> updateList = new ArrayList<AppInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (AppInfo appInfo : list) {
-                    // 主机存活预检：主机最近上报过则跳过进程下线判定（防重启误报）
+                    // 主机已下线则跳过进程下线判定（主机告警就够了）
                     Map<String, Object> hostParam = new HashMap<String, Object>();
                     hostParam.put("hostname", appInfo.getHostname());
                     List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
                     if (!CollectionUtil.isEmpty(hosts)) {
                         Date hostTime = hosts.get(0).getCreateTime();
-                        if (date.getTime() - hostTime.getTime() < delayTime) {
+                        if (date.getTime() - hostTime.getTime() > delayTime) {
                             continue;
                         }
                     }
@@ -236,13 +236,13 @@ public class ScheduledTask {
                 List<ContainerInfo> updateList = new ArrayList<ContainerInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (ContainerInfo containerInfo : list) {
-                    // 主机存活预检：主机最近上报过则跳过容器下线判定（防重启误报）
+                    // 主机已下线则跳过容器下线判定（主机告警就够了）
                     Map<String, Object> hostParam = new HashMap<String, Object>();
                     hostParam.put("hostname", containerInfo.getHostname());
                     List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
                     if (!CollectionUtil.isEmpty(hosts)) {
                         Date hostTime = hosts.get(0).getCreateTime();
-                        if (date.getTime() - hostTime.getTime() < delayTime) {
+                        if (date.getTime() - hostTime.getTime() > delayTime) {
                             continue;
                         }
                     }
