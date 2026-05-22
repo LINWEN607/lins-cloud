@@ -128,6 +128,7 @@ public class ScheduledTask {
     public void hostDownCheckTask() {
         Date date = DateUtil.getNowTime();
         long delayTime = 60 * 1000;
+        Set<String> justRecoveredHosts = new HashSet<>();
 
         try {
             Map<String, Object> params = new HashMap<String, Object>();
@@ -158,6 +159,7 @@ public class ScheduledTask {
                     } else {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(systemInfo.getId()))) {
                             WarnPools.MEM_WARN_MAP.remove(systemInfo.getId());
+                            justRecoveredHosts.add(systemInfo.getHostname());
                             Runnable runnable = () -> {
                                 WarnMailUtil.sendHostDown(systemInfo, false);
                             };
@@ -215,6 +217,9 @@ public class ScheduledTask {
                     } else {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
                             WarnPools.MEM_WARN_MAP.remove(appInfo.getId());
+                            if (justRecoveredHosts.contains(appInfo.getHostname())) {
+                                continue;
+                            }
                             Runnable runnable = () -> {
                                 WarnMailUtil.sendAppDown(appInfo, false);
                             };
@@ -278,6 +283,9 @@ public class ScheduledTask {
                         } else {
                             if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
                                 WarnPools.MEM_WARN_MAP.remove(containerInfo.getId());
+                                if (justRecoveredHosts.contains(containerInfo.getHostname())) {
+                                    continue;
+                                }
                                 Runnable runnable = () -> {
                                     WarnMailUtil.sendContainerDown(containerInfo, false);
                                 };
