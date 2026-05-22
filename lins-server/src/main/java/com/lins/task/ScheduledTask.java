@@ -124,10 +124,10 @@ public class ScheduledTask {
      * 300秒后执行
      * 检测主机是否已经下线，检测进程是否下线
      */
-    @Scheduled(initialDelay = 300000L, fixedRate = 5 * 60 * 1000)
+    @Scheduled(initialDelay = 60000L, fixedRate = 30 * 1000)
     public void hostDownCheckTask() {
         Date date = DateUtil.getNowTime();
-        long delayTime = 300 * 1000;
+        long delayTime = 60 * 1000;
 
         try {
             Map<String, Object> params = new HashMap<String, Object>();
@@ -397,10 +397,10 @@ public class ScheduledTask {
     }
 
     /**
-     * 30秒后执行，之后每隔1分钟执行, 单位：ms。
+     * 10秒后执行，之后每隔10秒执行, 单位：ms。
      * 批量提交数据
      */
-    @Scheduled(initialDelay = 30000L, fixedRate = 1 * 60 * 1000)
+    @Scheduled(initialDelay = 10000L, fixedRate = 10 * 1000)
     public synchronized void commitTask() {
         logger.info("批量提交监控数据任务开始----------" + DateUtil.getCurrentDateTime());
         try {
