@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -45,6 +47,10 @@ public class AgentController {
 
     ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 40, 2, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
 
+    private static final Map<String, Long> logMatchDedupCache = new ConcurrentHashMap<>();
+    private static final long DEDUP_WINDOW_MS = 5000;
+    private static final Pattern SYSLOG_PREFIX = Pattern.compile("^\\S+\\s+\\S+\\s+\\S+\\s*");
+
 
     @Resource
     private LogInfoService logInfoService;
@@ -56,6 +62,15 @@ public class AgentController {
     private ContainerInfoService containerInfoService;
     @Autowired
     private TokenUtils tokenUtils;
+
+    private static String stripLogPrefix(String line) {
+        if (line == null) return "";
+        Matcher m = SYSLOG_PREFIX.matcher(line);
+        if (m.find()) {
+            return line.substring(m.end());
+        }
+        return line;
+    }
 
     @ResponseBody
     @RequestMapping("/minTask")
@@ -150,14 +165,19 @@ public class AgentController {
                 }
             }
             if (logMonitorMatch != null) {
-                Set<String> seen = new HashSet<>();
+                long now = System.currentTimeMillis();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
                     String hostname = match.getStr("hostname");
                     String logFilePath = match.getStr("logFilePath");
                     String matchedLine = match.getStr("matchedLine");
-                    String key = hostname + "|" + logFilePath + "|" + matchedLine;
-                    if (!seen.add(key)) continue;
+                    String normalized = stripLogPrefix(matchedLine);
+                    String cacheKey = hostname + "|" + logFilePath + "|" + normalized;
+                    Long lastTime = logMatchDedupCache.get(cacheKey);
+                    if (lastTime != null && (now - lastTime) < DEDUP_WINDOW_MS) {
+                        continue;
+                    }
+                    logMatchDedupCache.put(cacheKey, now);
                     WarnMailUtil.sendLogMatchWarn(hostname, logFilePath, matchedLine);
                 }
             }
