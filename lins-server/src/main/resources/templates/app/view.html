@@ -67,7 +67,7 @@
                   <td> <button type="button" title="当前已显示该日期相关图表" class="btn btn-block btn-outline-danger btn-sm" th:text="${item}">Primary</button></td>
                 </th:block>
                 <th:block th:unless="${item eq  datenow}">
-                  <td> <button type="button"  th:onclick="|viewDate('${appInfo.id}','${item}')|" class="btn btn-block btn-outline-primary btn-sm" th:text="${item}">Primary</button></td>
+                  <td> <button type="button" th:data-id="${appInfo.id}" th:data-date="${item}" onclick="viewDate(this.dataset.id, this.dataset.date)" class="btn btn-block btn-outline-primary btn-sm" th:text="${item}">Primary</button></td>
                 </th:block>
               </th:block>
             </tr>

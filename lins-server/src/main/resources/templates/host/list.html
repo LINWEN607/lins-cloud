@@ -100,13 +100,13 @@
               <td th:text="${#dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss')}">Update software</td>
                 <td th:text="${item.remark}"></td>
               <td>
-                  <button type="button" class="btn btn-default btn-sm" data-toggle="modal" th:onclick="|setHostRemark('${item.id}','${item.remark}')|" data-target="#modal-default">
+                  <button type="button" class="btn btn-default btn-sm" data-toggle="modal" th:data-id="${item.id}" th:data-remark="${item.remark}" onclick="setHostRemark(this.dataset.id, this.dataset.remark)" data-target="#modal-default">
                      备注
                   </button>
-                  <button type="button"  th:onclick="|view('${item.id}')|"  class="btn btn-primary btn-sm">系统信息</button>
-                  <button type="button"  th:onclick="|viewChart('${item.id}')|"  class="btn btn-primary btn-sm">图表</button>
-                  <button type="button"  th:onclick="|viewApps('${item.hostname}')|"  class="btn btn-primary btn-sm">进程</button>
-                  <button type="button"  th:onclick="|del('${item.id}')|"  class="btn bg-gradient-danger btn-sm">删除</button></td>
+                  <button type="button" th:data-id="${item.id}" onclick="view(this.dataset.id)" class="btn btn-primary btn-sm">系统信息</button>
+                  <button type="button" th:data-id="${item.id}" onclick="viewChart(this.dataset.id)" class="btn btn-primary btn-sm">图表</button>
+                  <button type="button" th:data-hostname="${item.hostname}" onclick="viewApps(this.dataset.hostname)" class="btn btn-primary btn-sm">进程</button>
+                  <button type="button" th:data-id="${item.id}" onclick="del(this.dataset.id)" class="btn bg-gradient-danger btn-sm">删除</button></td>
 
             </tr>
           </th:block>
