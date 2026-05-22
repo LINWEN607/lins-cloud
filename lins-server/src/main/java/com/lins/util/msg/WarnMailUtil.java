@@ -53,16 +53,31 @@ public class WarnMailUtil {
         return !StaticKeys.NO_SEND_WARN.equals(fallback.get());
     }
 
-    private static void sendToAllChannels(String title, String content) {
+    private static boolean sendToAllChannels(String title, String content) {
+        boolean anySucceeded = false;
+        boolean anyConfigured = false;
         if (StaticKeys.mailSet != null) {
-            sendMail(StaticKeys.mailSet.getToMail(), title, content);
+            anyConfigured = true;
+            if ("success".equals(sendMail(StaticKeys.mailSet.getToMail(), title, content))) {
+                anySucceeded = true;
+            }
         }
         if (StaticKeys.feishuConfig != null && "1".equals(StaticKeys.feishuConfig.getEnabled())) {
-            FeishuSender.send(StaticKeys.feishuConfig, title, content);
+            anyConfigured = true;
+            if (FeishuSender.send(StaticKeys.feishuConfig, title, content)) {
+                anySucceeded = true;
+            }
         }
         if (StaticKeys.dingtalkConfig != null && "1".equals(StaticKeys.dingtalkConfig.getEnabled())) {
-            DingtalkSender.send(StaticKeys.dingtalkConfig, title, content);
+            anyConfigured = true;
+            if (DingtalkSender.send(StaticKeys.dingtalkConfig, title, content)) {
+                anySucceeded = true;
+            }
         }
+        if (!anySucceeded) {
+            logger.warn("告警推送失败：所有通知通道均未送达，请检查配置。title={}", title);
+        }
+        return anySucceeded;
     }
 
 
@@ -186,17 +201,15 @@ public class WarnMailUtil {
             if ("SENT".equals(WarnPools.MEM_WARN_MAP.get(key))) {
                 return false;
             }
-            try {
-                String title = "主机下线告警：" + systemInfo.getHostname();
-                String commContent = "主机已经超过10分钟未上报数据，可能已经下线：" + systemInfo.getHostname() + "，备注：" + systemInfo.getRemark()
-                        + "。如果不再监控该主机在列表删除即可，同时不会再收到该主机告警通知";
-                sendToAllChannels(title, commContent);
+            String title = "主机下线告警：" + systemInfo.getHostname();
+            String commContent = "主机已经超过10分钟未上报数据，可能已经下线：" + systemInfo.getHostname() + "，备注：" + systemInfo.getRemark()
+                    + "。如果不再监控该主机在列表删除即可，同时不会再收到该主机告警通知";
+            if (sendToAllChannels(title, commContent)) {
                 WarnPools.MEM_WARN_MAP.put(key, "SENT");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
-            } catch (Exception e) {
-                logger.error("发送主机下线告警失败：", e);
-                logInfoService.save("发送主机下线告警错误", e.toString(), StaticKeys.LOG_ERROR);
+            } else {
+                WarnPools.MEM_WARN_MAP.remove(key);
             }
+            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
@@ -229,17 +242,15 @@ public class WarnMailUtil {
             if ("SENT".equals(WarnPools.MEM_WARN_MAP.get(key))) {
                 return false;
             }
-            try {
-                String title = "进程下线告警：" + appInfo.getHostname() + "，" + appInfo.getAppName();
-                String commContent = "进程已经超过10分钟未上报数据，可能已经下线：" + appInfo.getHostname() + "，" + appInfo.getAppName()
-                        + "。如果不再监控该进程在列表删除即可，同时不会再收到该进程告警通知";
-                sendToAllChannels(title, commContent);
+            String title = "进程下线告警：" + appInfo.getHostname() + "，" + appInfo.getAppName();
+            String commContent = "进程已经超过10分钟未上报数据，可能已经下线：" + appInfo.getHostname() + "，" + appInfo.getAppName()
+                    + "。如果不再监控该进程在列表删除即可，同时不会再收到该进程告警通知";
+            if (sendToAllChannels(title, commContent)) {
                 WarnPools.MEM_WARN_MAP.put(key, "SENT");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
-            } catch (Exception e) {
-                logger.error("发送进程下线告警失败：", e);
-                logInfoService.save("发送进程下线告警错误", e.toString(), StaticKeys.LOG_ERROR);
+            } else {
+                WarnPools.MEM_WARN_MAP.remove(key);
             }
+            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
@@ -271,16 +282,14 @@ public class WarnMailUtil {
             if ("SENT".equals(WarnPools.MEM_WARN_MAP.get(key))) {
                 return false;
             }
-            try {
-                String title = "容器下线告警：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
-                String commContent = "容器已经超过10分钟未上报数据，可能已经下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
-                sendToAllChannels(title, commContent);
+            String title = "容器下线告警：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+            String commContent = "容器已经超过10分钟未上报数据，可能已经下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
+            if (sendToAllChannels(title, commContent)) {
                 WarnPools.MEM_WARN_MAP.put(key, "SENT");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
-            } catch (Exception e) {
-                logger.error("发送容器下线告警失败：", e);
-                logInfoService.save("发送容器下线告警错误", e.toString(), StaticKeys.LOG_ERROR);
+            } else {
+                WarnPools.MEM_WARN_MAP.remove(key);
             }
+            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
