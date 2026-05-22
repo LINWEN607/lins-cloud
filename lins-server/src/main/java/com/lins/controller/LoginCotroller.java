@@ -1,9 +1,7 @@
 package com.lins.controller;
 
-import com.lins.config.CommonConfig;
 import com.lins.entity.AccountInfo;
 import com.lins.service.SystemConfigService;
-import com.lins.util.shorturl.MD5;
 import com.lins.util.staticvar.StaticKeys;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,9 +27,6 @@ import javax.servlet.http.HttpSession;
 public class LoginCotroller {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCotroller.class);
-
-    @Resource
-    private CommonConfig commonConfig;
 
     @Resource
     private SystemConfigService systemConfigService;
@@ -82,9 +77,8 @@ public class LoginCotroller {
                     return "login/login";
                 }*/
                 AccountInfo accountInfo = new AccountInfo();
-                String dbPwd = systemConfigService.getVal("adminPwd");
-                String validPwd = dbPwd != null ? dbPwd : MD5.GetMD5Code(commonConfig.getAdmindPwd());
-                if (validPwd.equals(passwd) && StaticKeys.ADMIN_ACCOUNT.equals(userName)) {
+                String validPwd = systemConfigService.getVal("adminPwd");
+                if (StringUtils.isNotEmpty(validPwd) && validPwd.equals(passwd) && StaticKeys.ADMIN_ACCOUNT.equals(userName)) {
                     accountInfo.setAccount(StaticKeys.ADMIN_ACCOUNT);
                     accountInfo.setId(StaticKeys.ADMIN_ACCOUNT);
                     request.getSession().setAttribute(StaticKeys.LOGIN_KEY, accountInfo);

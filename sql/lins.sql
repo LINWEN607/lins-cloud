@@ -332,6 +332,8 @@ CREATE TABLE `SYSTEM_CONFIG` (
   PRIMARY KEY (`CONFIG_KEY`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+INSERT INTO SYSTEM_CONFIG (CONFIG_KEY, CONFIG_VALUE) VALUES ('adminPwd', '0192023a7bbd73250516f069df18b500');
+
 -- ----------------------------
 -- Table structure for container_info
 -- ----------------------------
