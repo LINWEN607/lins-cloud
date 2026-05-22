@@ -143,6 +143,7 @@ public class ScheduledTask {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(systemInfo.getId()))) {
                             continue;
                         }
+                        WarnPools.MEM_WARN_MAP.put(systemInfo.getId(), "PENDING");
                         systemInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
                         logInfo.setHostname("主机下线：" + systemInfo.getHostname());
@@ -156,6 +157,7 @@ public class ScheduledTask {
                         executor.execute(runnable);
                     } else {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(systemInfo.getId()))) {
+                            WarnPools.MEM_WARN_MAP.remove(systemInfo.getId());
                             Runnable runnable = () -> {
                                 WarnMailUtil.sendHostDown(systemInfo, false);
                             };
@@ -198,6 +200,7 @@ public class ScheduledTask {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
                             continue;
                         }
+                        WarnPools.MEM_WARN_MAP.put(appInfo.getId(), "PENDING");
                         appInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
                         logInfo.setHostname("进程下线IP：" + appInfo.getHostname() + "，名称：" + appInfo.getAppName());
@@ -211,6 +214,7 @@ public class ScheduledTask {
                         executor.execute(runnable);
                     } else {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
+                            WarnPools.MEM_WARN_MAP.remove(appInfo.getId());
                             Runnable runnable = () -> {
                                 WarnMailUtil.sendAppDown(appInfo, false);
                             };
@@ -259,6 +263,7 @@ public class ScheduledTask {
                             if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
                                 continue;
                             }
+                            WarnPools.MEM_WARN_MAP.put(containerInfo.getId(), "PENDING");
                             containerInfo.setState(StaticKeys.DOWN_STATE);
                             LogInfo logInfo = new LogInfo();
                             logInfo.setHostname("容器下线：" + containerInfo.getHostname());
@@ -272,6 +277,7 @@ public class ScheduledTask {
                             executor.execute(runnable);
                         } else {
                             if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
+                                WarnPools.MEM_WARN_MAP.remove(containerInfo.getId());
                                 Runnable runnable = () -> {
                                     WarnMailUtil.sendContainerDown(containerInfo, false);
                                 };
