@@ -12,13 +12,13 @@
       <div class="container-fluid">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">SSH日志监控</h3>
+            <h3 class="card-title">日志监控列表</h3>
             <div class="card-tools">
-              <a th:href="@{'/logMonitor/ssh/edit'}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> 新增</a>
+              <a th:href="@{'/logMonitor/edit'}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> 新增</a>
             </div>
           </div>
           <div class="card-body">
-            <form method="get" th:action="@{'/logMonitor/ssh/list'}">
+            <form method="get" th:action="@{'/logMonitor/list'}">
               <div class="row" style="margin-bottom:10px;">
                 <div class="col-md-3">
                   <select name="remark" class="form-control form-control-sm select2" style="width:100%;">
@@ -37,9 +37,8 @@
                 <th>序号</th>
                 <th>主机(备注)</th>
                 <th>日志文件路径</th>
-                <th>SSH登录成功</th>
-                <th>SSH登录失败</th>
-                <th>SSH退出</th>
+                <th>正则表达式</th>
+                <th>启用告警</th>
                 <th>状态</th>
                 <th>创建时间</th>
                 <th>操作</th>
@@ -50,18 +49,18 @@
                 <td th:text="${stat.count}"></td>
                 <td th:text="${item.hostname} + ' (' + ${hostRemarkMap[item.hostname]} + ')'"></td>
                 <td th:text="${item.logFilePath}"></td>
-                <td th:text="${item.matchSshSuccess == 1 ? '是' : '否'}"></td>
-                <td th:text="${item.matchSshFailure == 1 ? '是' : '否'}"></td>
-                <td th:text="${item.matchSshLogout == 1 ? '是' : '否'}"></td>
+                <td th:text="${item.regexPattern}"></td>
+                <td th:text="${item.enableAlert == 1 ? '是' : '否'}"></td>
                 <td th:text="${item.state == '1' ? '启用' : '停用'}"></td>
                 <td th:text="${#dates.format(item.createTime, 'yyyy-MM-dd HH:mm')}"></td>
                 <td>
-                  <a th:href="@{'/logMonitor/ssh/edit?id=' + ${item.id}}" class="btn btn-warning btn-xs">编辑</a>
-                  <a th:href="@{'/logMonitor/ssh/del?id=' + ${item.id}}" class="btn btn-danger btn-xs" onclick="return confirm('确认删除?')">删除</a>
+                  <a th:href="@{'/logMonitor/edit?id=' + ${item.id}}" class="btn btn-warning btn-xs">编辑</a>
+                  <a th:href="@{'/logMonitor/toggle?id=' + ${item.id}}" class="btn btn-info btn-xs">切换</a>
+                  <a th:href="@{'/logMonitor/del?id=' + ${item.id}}" class="btn btn-danger btn-xs" onclick="return confirm('确认删除?')">删除</a>
                 </td>
               </tr>
               <tr th:if="${#lists.isEmpty(page.list)}">
-                <td colspan="9" style="text-align:center;">暂无数据</td>
+                <td colspan="8" style="text-align:center;">暂无数据</td>
               </tr>
               </tbody>
             </table>

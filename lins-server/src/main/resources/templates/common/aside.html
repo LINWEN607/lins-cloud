@@ -146,24 +146,13 @@
                 <ul class="nav nav-treeview">
                     <li class="nav-item">
                         <th:block th:if="${session.menuActive eq '431'}">
-                            <a th:href="@{'/logMonitor/ssh/list'}" class="nav-link active">
+                            <a th:href="@{'/logMonitor/list'}" class="nav-link active">
                         </th:block>
                         <th:block th:unless="${session.menuActive eq '431'}">
-                            <a th:href="@{'/logMonitor/ssh/list'}" class="nav-link">
-                        </th:block>
-                        <i class="fas fa-lock nav-icon"></i>
-                        <p>SSH日志监控</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <th:block th:if="${session.menuActive eq '432'}">
-                            <a th:href="@{'/logMonitor/nginx/list'}" class="nav-link active">
-                        </th:block>
-                        <th:block th:unless="${session.menuActive eq '432'}">
-                            <a th:href="@{'/logMonitor/nginx/list'}" class="nav-link">
+                            <a th:href="@{'/logMonitor/list'}" class="nav-link">
                         </th:block>
                         <i class="fas fa-server nav-icon"></i>
-                        <p>Nginx日志监控</p>
+                        <p>日志监控列表</p>
                         </a>
                     </li>
                 </ul>

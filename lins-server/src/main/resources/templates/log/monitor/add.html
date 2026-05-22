@@ -2,10 +2,6 @@
 <html>
 <head>
 <div th:replace="common/header.html"></div>
-<style>
-.keyword-group { margin-bottom:8px; }
-.keyword-group label { margin-right:15px; font-weight:normal; }
-</style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -16,11 +12,10 @@
       <div class="container-fluid">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title" th:text="${logMonitor.id == null} ? '新增SSH日志监控' : '编辑SSH日志监控'"></h3>
+            <h3 class="card-title" th:text="${logMonitor.id == null} ? '新增日志监控' : '编辑日志监控'"></h3>
           </div>
           <form th:action="@{'/logMonitor/save'}" method="post" class="form-horizontal">
             <input type="hidden" name="id" th:value="${logMonitor.id}" />
-            <input type="hidden" name="monitorType" value="ssh" />
             <div class="card-body">
               <div class="form-group row">
                 <label class="col-sm-2 col-form-label">主机</label>
@@ -34,17 +29,13 @@
               <div class="form-group row">
                 <label class="col-sm-2 col-form-label">日志文件路径</label>
                 <div class="col-sm-8">
-                  <input type="text" name="logFilePath" class="form-control" th:value="${logMonitor.logFilePath}" placeholder="/var/log/auth.log" required />
+                  <input type="text" name="logFilePath" class="form-control" th:value="${logMonitor.logFilePath}" placeholder="/var/log/nginx/access.log" required />
                 </div>
               </div>
               <div class="form-group row">
-                <label class="col-sm-2 col-form-label">SSH匹配模式</label>
+                <label class="col-sm-2 col-form-label">正则表达式</label>
                 <div class="col-sm-8">
-                  <div class="keyword-group">
-                    <label><input type="checkbox" name="matchSshSuccess" value="1" th:checked="${logMonitor.matchSshSuccess == 1}" /> 登录成功</label>
-                    <label><input type="checkbox" name="matchSshFailure" value="1" th:checked="${logMonitor.matchSshFailure == 1}" /> 登录失败</label>
-                    <label><input type="checkbox" name="matchSshLogout" value="1" th:checked="${logMonitor.matchSshLogout == 1}" /> 退出</label>
-                  </div>
+                  <input type="text" name="regexPattern" class="form-control" th:value="${logMonitor.regexPattern}" placeholder="输入正则表达式，匹配到即触发告警" />
                 </div>
               </div>
               <div class="form-group row">
@@ -74,7 +65,7 @@
             </div>
             <div class="card-footer">
               <button type="submit" class="btn btn-primary">保存</button>
-              <a th:href="@{'/logMonitor/ssh/list'}" class="btn btn-default">返回</a>
+              <a th:href="@{'/logMonitor/list'}" class="btn btn-default">返回</a>
             </div>
           </form>
         </div>

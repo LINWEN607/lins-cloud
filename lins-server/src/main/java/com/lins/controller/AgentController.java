@@ -26,8 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * @version v2.3
@@ -43,9 +42,6 @@ public class AgentController {
 
 
     private static final Logger logger = LoggerFactory.getLogger(AgentController.class);
-    private static final Map<String, Long> logMatchDedupCache = new ConcurrentHashMap<>();
-    private static final long DEDUP_WINDOW_MS = 300_000L;
-    private static final Pattern SRC_IP_PATTERN = Pattern.compile("from\\s+(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})", Pattern.CASE_INSENSITIVE);
 
     ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 40, 2, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
 
@@ -154,33 +150,15 @@ public class AgentController {
                 }
             }
             if (logMonitorMatch != null) {
-                long now = System.currentTimeMillis();
-                logMatchDedupCache.entrySet().removeIf(e -> now - e.getValue() > DEDUP_WINDOW_MS);
-                Map<String, String> hostnameRemarkMap = new HashMap<>();
-                try {
-                    List<SystemInfo> sysList = systemInfoService.selectAllByParams(new HashMap<>());
-                    for (SystemInfo si : sysList) {
-                        hostnameRemarkMap.put(si.getHostname(), si.getRemark());
-                    }
-                } catch (Exception e) {
-                    logger.error("查询主机信息错误", e);
-                }
+                Set<String> seen = new HashSet<>();
                 for (Object obj : logMonitorMatch) {
                     JSONObject match = (JSONObject) obj;
                     String hostname = match.getStr("hostname");
                     String logFilePath = match.getStr("logFilePath");
                     String matchedLine = match.getStr("matchedLine");
-                    String matchedType = match.getStr("matchedType");
-                    String matchedUser = match.getStr("matchedUser");
-                    String dedupKey = hostname + "|" + logFilePath + "|" + matchedLine;
-                    String hash = sha1Hex(dedupKey);
-                    if (logMatchDedupCache.containsKey(hash)) continue;
-                    logMatchDedupCache.put(hash, now);
-                    Set<String> ips = new LinkedHashSet<>();
-                    Matcher m = SRC_IP_PATTERN.matcher(matchedLine);
-                    if (m.find()) ips.add(m.group(1));
-                    String remark = hostnameRemarkMap.get(hostname);
-                    WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, 1, ips, matchedUser);
+                    String key = hostname + "|" + logFilePath + "|" + matchedLine;
+                    if (!seen.add(key)) continue;
+                    WarnMailUtil.sendLogMatchWarn(hostname, logFilePath, matchedLine);
                 }
             }
             resultJson.put("result", "success");
@@ -189,20 +167,6 @@ public class AgentController {
             resultJson.put("result", "error：" + e.toString());
         } finally {
             return resultJson;
-        }
-    }
-
-    private static String sha1Hex(String input) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
-            byte[] digest = md.digest(input.getBytes("UTF-8"));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return input;
         }
     }
 

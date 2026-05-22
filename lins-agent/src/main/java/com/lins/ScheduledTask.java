@@ -50,10 +50,6 @@ public class ScheduledTask {
 
     private SystemInfo systemInfo = null;
 
-    private static final Pattern SSH_SUCCESS_PATTERN = Pattern.compile("Accepted\\s+(password|publickey)\\s+for", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SSH_FAILURE_PATTERN = Pattern.compile("Failed\\s+password\\s+for", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SSH_LOGOUT_PATTERN = Pattern.compile("Disconnected\\s+from\\s+user", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SSH_USER_PATTERN = Pattern.compile("(?:for|user)\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
 
 
     /**
@@ -233,18 +229,12 @@ public class ScheduledTask {
                             while ((line = raf.readLine()) != null) {
                                 if (line.trim().length() == 0) continue;
                                 String lineStr = new String(line.getBytes("ISO-8859-1"), "UTF-8");
-                                String matchedType = matchLogLine(lm, lineStr);
-                                if (matchedType != null) {
+                                if (matchLogLine(lm, lineStr)) {
                                     JSONObject match = new JSONObject();
                                     match.put("logMonitorId", lm.getId());
                                     match.put("hostname", commonConfig.getBindIp());
                                     match.put("logFilePath", lm.getLogFilePath());
                                     match.put("matchedLine", lineStr);
-                                    match.put("matchedType", matchedType);
-                                    Matcher userMatcher = SSH_USER_PATTERN.matcher(lineStr);
-                                    if (userMatcher.find()) {
-                                        match.put("matchedUser", userMatcher.group(1));
-                                    }
                                     logMatchArray.add(match);
                                 }
                             }
@@ -275,31 +265,16 @@ public class ScheduledTask {
     }
 
 
-    private String matchLogLine(LogMonitor lm, String line) {
-        String type = lm.getMonitorType();
-        if (type == null) type = "ssh";
-        if ("ssh".equals(type)) {
-            if (lm.getMatchSshSuccess() == 1 && SSH_SUCCESS_PATTERN.matcher(line).find()) {
-                return "ssh_success";
-            }
-            if (lm.getMatchSshFailure() == 1 && SSH_FAILURE_PATTERN.matcher(line).find()) {
-                return "ssh_failure";
-            }
-            if (lm.getMatchSshLogout() == 1 && SSH_LOGOUT_PATTERN.matcher(line).find()) {
-                return "ssh_logout";
-            }
-            return null;
+    private boolean matchLogLine(LogMonitor lm, String line) {
+        if (StringUtils.isEmpty(lm.getRegexPattern())) {
+            return false;
         }
-        if ("custom".equals(type) && !StringUtils.isEmpty(lm.getCustomKeywords())) {
-            String[] keywords = lm.getCustomKeywords().split(",");
-            for (String kw : keywords) {
-                String trimmed = kw.trim();
-                if (trimmed.length() > 0 && line.contains(trimmed)) {
-                    return "custom";
-                }
-            }
+        try {
+            return Pattern.compile(lm.getRegexPattern()).matcher(line).find();
+        } catch (Exception e) {
+            logger.warn("正则表达式错误：{}", lm.getRegexPattern());
+            return false;
         }
-        return null;
     }
 
 

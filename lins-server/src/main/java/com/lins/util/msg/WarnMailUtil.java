@@ -305,35 +305,18 @@ public class WarnMailUtil {
         return false;
     }
 
-    public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedType, int count, Set<String> sourceIps, String matchedUser) {
+    public static void sendLogMatchWarn(String hostname, String logFilePath, String matchedLine) {
         if (!isAlertEnabled("logMatchWarnMail", () -> "yes")) {
             return;
         }
         try {
-            String displayName = StringUtils.isEmpty(remark) ? hostname : remark;
             String now = DateUtil.getNowTime().toString().substring(0, 19);
-            String title = "日志匹配告警：" + displayName;
+            String title = "日志匹配告警：" + hostname;
             StringBuilder sb = new StringBuilder();
             sb.append("时间：").append(now).append("\n");
-            sb.append("主机IP：").append(hostname).append("（").append(displayName).append("）\n");
+            sb.append("主机IP：").append(hostname).append("\n");
             sb.append("日志文件：").append(logFilePath).append("\n");
-            String typeLabel;
-            if ("ssh_success".equals(matchedType)) {
-                typeLabel = "登录成功";
-            } else if ("ssh_failure".equals(matchedType)) {
-                typeLabel = "登录失败";
-            } else if ("ssh_logout".equals(matchedType)) {
-                typeLabel = "退出登录";
-            } else {
-                typeLabel = "自定义匹配";
-            }
-            sb.append(typeLabel).append(" ").append(count).append(" 次");
-            if (StringUtils.isNotBlank(matchedUser)) {
-                sb.append("\n").append("用户：").append(matchedUser);
-            }
-            if (sourceIps != null && !sourceIps.isEmpty()) {
-                sb.append("\n").append("来源IP：").append(String.join("、", sourceIps));
-            }
+            sb.append("匹配内容：").append(matchedLine);
             String commContent = sb.toString().trim();
             sendToAllChannels(title, commContent);
             logInfoService.save(hostname, commContent, StaticKeys.LOG_ERROR);
