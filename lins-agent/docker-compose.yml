@@ -13,7 +13,7 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /etc:/host/etc:ro
-      - /data/lins/agent/logs:/app/log
+      - /data/linscloud/lins-agent/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
       - /var/run:/var/run:ro
       - /var/log:/var/log:ro

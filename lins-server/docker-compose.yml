@@ -9,8 +9,8 @@ services:
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
       TZ: Asia/Shanghai
     volumes:
-      - /data/lins/mysql:/var/lib/mysql
-      - /data/lins/server/lins.sql:/docker-entrypoint-initdb.d/lins.sql
+      - /data/linscloud/mysql:/var/lib/mysql
+      - /data/linscloud/server/lins.sql:/docker-entrypoint-initdb.d/lins.sql
     ports:
       - "3306:3306"
     healthcheck:
@@ -25,13 +25,11 @@ services:
       - "9999:9999"
     environment:
       - TZ=Asia/Shanghai
-      - MAIL_MEMWARNVAL=90
-      - MAIL_CPUWARNVAL=85
-      - spring.datasource.url=jdbc:mysql://mysql:3306/lins?characterEncoding=utf-8&autoReconnect=true&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+      - spring.datasource.url=jdbc:mysql://mysql:3306/lins?characterEncoding=utf-8&autoReconnect=true&useSSL=false&allowMultiQueries=true
       - spring.datasource.username=root
       - spring.datasource.password=123456
     volumes:
-      - /data/lins/server/logs:/app/log
+      - /data/linscloud/lins-server/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       mysql:
