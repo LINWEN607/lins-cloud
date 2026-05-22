@@ -75,8 +75,9 @@
                           <tr>
                             <td th:text="${iterStat.index+1}"></td>
                             <td>
+                              <th:block th:if="${item.state == '0'}">操作</th:block>
                               <th:block th:if="${item.state == '1'}">告警</th:block>
-                              <th:block th:unless="${item.state == '1'}">信息</th:block>
+                              <th:block th:if="${item.state == null}">信息</th:block>
                             </td>
                             <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.infoContent.length() > 80 ? item.infoContent.substring(0, 80) + '...' : item.infoContent}" title="${item.infoContent}"></td>
                             <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.hostname}" title="${item.hostname}"></td>

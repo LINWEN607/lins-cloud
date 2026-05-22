@@ -153,9 +153,17 @@ public class ContainerInfoController {
     public String delete(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         String errorMsg = "删除容器信息错误：";
         try {
-            if (!StringUtils.isEmpty(request.getParameter("id"))) {
-                containerInfoService.deleteById(request.getParameter("id").split(","));
-                logInfoService.save("删除容器", "删除容器ID：" + request.getParameter("id"), StaticKeys.LOG_ERROR);
+            String id = request.getParameter("id");
+            if (!StringUtils.isEmpty(id)) {
+                String hostname = "";
+                String containerName = "";
+                ContainerInfo delContainer = containerInfoService.selectById(id);
+                if (delContainer != null) {
+                    hostname = StringUtils.defaultString(delContainer.getHostname());
+                    containerName = StringUtils.defaultString(delContainer.getContainerName());
+                }
+                containerInfoService.deleteById(id.split(","));
+                logInfoService.save(hostname, "删除容器：" + hostname + "：" + containerName, StaticKeys.LOG_OPERATION);
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);

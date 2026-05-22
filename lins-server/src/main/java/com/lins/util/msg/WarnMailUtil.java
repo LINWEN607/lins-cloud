@@ -102,7 +102,7 @@ public class WarnMailUtil {
                 String commContent = "服务器：" + memState.getHostname() + ",内存使用率为" + Double.valueOf(memState.getUsePer()) + "%，可能存在异常，请查看";
                 sendToAllChannels(title, commContent);
                 WarnPools.MEM_WARN_MAP.put(key, "1");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(memState.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送内存告警失败：", e);
                 logInfoService.save("发送内存告警错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -133,7 +133,7 @@ public class WarnMailUtil {
                 String commContent = "服务器：" + cpuState.getHostname() + ",CPU使用率为" + Double.valueOf(cpuState.getSys()) + "%，可能存在异常，请查看";
                 sendToAllChannels(title, commContent);
                 WarnPools.MEM_WARN_MAP.put(key, "1");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(cpuState.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送CPU告警失败：", e);
                 logInfoService.save("发送CPU告警错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -165,7 +165,7 @@ public class WarnMailUtil {
                 String commContent = "服务接口：" + heathMonitor.getHeathUrl() + "，响应状态码为" + heathMonitor.getHeathStatus() + "，可能存在异常，请查看";
                 sendToAllChannels(title, commContent);
                 WarnPools.MEM_WARN_MAP.put(key, "1");
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(heathMonitor.getAppName(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送服务健康检测告警失败：", e);
                 logInfoService.save("发送服务健康检测告警错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -176,7 +176,7 @@ public class WarnMailUtil {
                 String title = "服务接口恢复正常通知：" + heathMonitor.getAppName();
                 String commContent = "服务接口恢复正常通知：" + heathMonitor.getHeathUrl() + "，响应状态码为" + heathMonitor.getHeathStatus() + "";
                 sendToAllChannels(title, commContent);
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(heathMonitor.getAppName(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送服务接口恢复正常通知失败：", e);
                 logInfoService.save("发送服务接口恢复正常通知错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -209,7 +209,7 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(systemInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
@@ -217,7 +217,7 @@ public class WarnMailUtil {
                 String commContent = "主机已经恢复上线：" + systemInfo.getHostname() + "，备注：" + systemInfo.getRemark()
                         + "。";
                 sendToAllChannels(title, commContent);
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(systemInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送主机恢复上线通知失败：", e);
                 logInfoService.save("发送主机恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -250,14 +250,14 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(appInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
                 String title = "进程恢复上线通知：" + appInfo.getHostname() + "，" + appInfo.getAppName();
                 String commContent = "进程恢复上线通知：" + appInfo.getHostname() + "，" + appInfo.getAppName();
                 sendToAllChannels(title, commContent);
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(appInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送进程恢复上线通知失败：", e);
                 logInfoService.save("发送进程恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -289,14 +289,14 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(containerInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
                 String title = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
                 String commContent = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
                 sendToAllChannels(title, commContent);
-                logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(containerInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送容器恢复上线通知失败：", e);
                 logInfoService.save("发送容器恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -336,7 +336,7 @@ public class WarnMailUtil {
             }
             String commContent = sb.toString().trim();
             sendToAllChannels(title, commContent);
-            logInfoService.save(title, commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(hostname, commContent, StaticKeys.LOG_ERROR);
         } catch (Exception e) {
             logger.error("发送日志匹配告警失败：", e);
             logInfoService.save("发送日志匹配告警错误", e.toString(), StaticKeys.LOG_ERROR);
