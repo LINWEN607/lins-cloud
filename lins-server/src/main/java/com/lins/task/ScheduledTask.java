@@ -160,6 +160,8 @@ public class ScheduledTask {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(systemInfo.getId()))) {
                             WarnPools.MEM_WARN_MAP.remove(systemInfo.getId());
                             justRecoveredHosts.add(systemInfo.getHostname());
+                            systemInfo.setState("1");
+                            updateList.add(systemInfo);
                             Runnable runnable = () -> {
                                 WarnMailUtil.sendHostDown(systemInfo, false);
                             };
@@ -217,6 +219,8 @@ public class ScheduledTask {
                     } else {
                         if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
                             WarnPools.MEM_WARN_MAP.remove(appInfo.getId());
+                            appInfo.setState("1");
+                            updateList.add(appInfo);
                             if (justRecoveredHosts.contains(appInfo.getHostname())) {
                                 continue;
                             }
@@ -283,6 +287,8 @@ public class ScheduledTask {
                         } else {
                             if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
                                 WarnPools.MEM_WARN_MAP.remove(containerInfo.getId());
+                                containerInfo.setState("1");
+                                updateList.add(containerInfo);
                                 if (justRecoveredHosts.contains(containerInfo.getHostname())) {
                                     continue;
                                 }

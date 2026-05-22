@@ -24,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +105,9 @@ public class ContainerInfoController {
                     info.setCpuPer(latest.getCpuPer());
                     info.setMemPer(latest.getMemPer());
                     info.setCreateTime(latest.getCreateTime());
-                    info.setState("1");
+                    Date now = new Date();
+                    long diff = now.getTime() - latest.getCreateTime().getTime();
+                    info.setState(diff > 60000 ? "2" : "1");
                 } else {
                     info.setState("2");
                 }
