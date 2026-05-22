@@ -187,13 +187,15 @@ public class ScheduledTask {
                 List<AppInfo> updateList = new ArrayList<AppInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (AppInfo appInfo : list) {
-                    // 主机已下线则跳过进程下线判定（主机告警就够了）
+                    // 主机已下线则标记进程离线但不推送
                     Map<String, Object> hostParam = new HashMap<String, Object>();
                     hostParam.put("hostname", appInfo.getHostname());
                     List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
                     if (!CollectionUtil.isEmpty(hosts)) {
                         Date hostTime = hosts.get(0).getCreateTime();
                         if (date.getTime() - hostTime.getTime() > delayTime) {
+                            appInfo.setState(StaticKeys.DOWN_STATE);
+                            updateList.add(appInfo);
                             continue;
                         }
                     }
@@ -217,10 +219,12 @@ public class ScheduledTask {
                         };
                         executor.execute(runnable);
                     } else {
-                        if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
-                            WarnPools.MEM_WARN_MAP.remove(appInfo.getId());
+                        if (StaticKeys.DOWN_STATE.equals(appInfo.getState())) {
                             appInfo.setState("1");
                             updateList.add(appInfo);
+                        }
+                        if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(appInfo.getId()))) {
+                            WarnPools.MEM_WARN_MAP.remove(appInfo.getId());
                             if (justRecoveredHosts.contains(appInfo.getHostname())) {
                                 continue;
                             }
@@ -249,13 +253,15 @@ public class ScheduledTask {
                 List<ContainerInfo> updateList = new ArrayList<ContainerInfo>();
                 List<LogInfo> logInfoList = new ArrayList<LogInfo>();
                 for (ContainerInfo containerInfo : list) {
-                    // 主机已下线则跳过容器下线判定（主机告警就够了）
+                    // 主机已下线则标记容器离线但不推送
                     Map<String, Object> hostParam = new HashMap<String, Object>();
                     hostParam.put("hostname", containerInfo.getHostname());
                     List<SystemInfo> hosts = systemInfoService.selectAllByParams(hostParam);
                     if (!CollectionUtil.isEmpty(hosts)) {
                         Date hostTime = hosts.get(0).getCreateTime();
                         if (date.getTime() - hostTime.getTime() > delayTime) {
+                            containerInfo.setState(StaticKeys.DOWN_STATE);
+                            updateList.add(containerInfo);
                             continue;
                         }
                     }
@@ -285,10 +291,12 @@ public class ScheduledTask {
                             };
                             executor.execute(runnable);
                         } else {
-                            if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
-                                WarnPools.MEM_WARN_MAP.remove(containerInfo.getId());
+                            if (StaticKeys.DOWN_STATE.equals(containerInfo.getState())) {
                                 containerInfo.setState("1");
                                 updateList.add(containerInfo);
+                            }
+                            if (!StringUtils.isEmpty(WarnPools.MEM_WARN_MAP.get(containerInfo.getId()))) {
+                                WarnPools.MEM_WARN_MAP.remove(containerInfo.getId());
                                 if (justRecoveredHosts.contains(containerInfo.getHostname())) {
                                     continue;
                                 }

@@ -24,7 +24,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,11 +104,6 @@ public class ContainerInfoController {
                     info.setCpuPer(latest.getCpuPer());
                     info.setMemPer(latest.getMemPer());
                     info.setCreateTime(latest.getCreateTime());
-                    Date now = new Date();
-                    long diff = now.getTime() - latest.getCreateTime().getTime();
-                    info.setState(diff > 60000 ? "2" : "1");
-                } else {
-                    info.setState("2");
                 }
             }
         } catch (Exception e) {
@@ -158,18 +152,14 @@ public class ContainerInfoController {
     @RequestMapping(value = "del")
     public String delete(Model model, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         String errorMsg = "删除容器信息错误：";
-        ContainerInfo containerInfo = new ContainerInfo();
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
-                containerInfo = containerInfoService.selectById(request.getParameter("id"));
-                String hostname = StringUtils.defaultString(containerInfo.getHostname());
-                String containerName = StringUtils.defaultString(containerInfo.getContainerName());
-                logInfoService.save("删除容器：" + hostname, "删除容器：" + hostname + "：" + containerName, StaticKeys.LOG_ERROR);
                 containerInfoService.deleteById(request.getParameter("id").split(","));
+                logInfoService.save("删除容器", "删除容器ID：" + request.getParameter("id"), StaticKeys.LOG_ERROR);
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(StringUtils.defaultString(containerInfo.getHostname()) + ":" + StringUtils.defaultString(containerInfo.getContainerName()), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("删除容器错误", errorMsg + e.toString(), StaticKeys.LOG_ERROR);
         }
         return "redirect:/containerInfo/list";
     }
