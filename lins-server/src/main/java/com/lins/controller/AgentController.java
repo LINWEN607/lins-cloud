@@ -181,12 +181,6 @@ public class AgentController {
                     if (m.find()) ips.add(m.group(1));
                     String remark = hostnameRemarkMap.get(hostname);
                     WarnMailUtil.sendLogMatchWarn(hostname, remark, logFilePath, matchedType, 1, ips, matchedUser);
-                    LogInfo li = new LogInfo();
-                    li.setId(com.lins.util.UUIDUtil.getUUID());
-                    li.setHostname(hostname);
-                    li.setInfoContent("日志匹配: " + matchedLine);
-                    li.setCreateTime(new java.util.Date());
-                    BatchData.LOG_INFO_LIST.add(li);
                 }
             }
             resultJson.put("result", "success");

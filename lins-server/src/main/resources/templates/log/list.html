@@ -63,9 +63,9 @@
                         <thead>
                         <tr>
                           <th style="width: 60px">序号</th>
-                          <th style="width: 120px">主机名</th>
+                          <th style="width: 80px">事件</th>
                           <th>摘要</th>
-                          <th style="width: 50px">状态</th>
+                          <th style="width: 120px">主机名称</th>
                           <th style="width: 150px">时间</th>
                           <th style="width: 70px">操作</th>
                         </tr>
@@ -74,9 +74,12 @@
                         <th:block th:each="item,iterStat : ${page.list}">
                           <tr>
                             <td th:text="${iterStat.index+1}"></td>
-                            <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.hostname}" title="${item.hostname}"></td>
+                            <td>
+                              <th:block th:if="${item.state == '1'}">告警</th:block>
+                              <th:block th:unless="${item.state == '1'}">信息</th:block>
+                            </td>
                             <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.infoContent.length() > 80 ? item.infoContent.substring(0, 80) + '...' : item.infoContent}" title="${item.infoContent}"></td>
-                            <td th:text="${item.state != null ? item.state : '-'}"></td>
+                            <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" th:text="${item.hostname}" title="${item.hostname}"></td>
                             <td th:text="${item.createTime != null ? #dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
                             <td>
                               <button type="button" th:data-id="${item.id}" onclick="view(this.dataset.id)" class="btn bg-gradient-primary btn-sm">查看</button>

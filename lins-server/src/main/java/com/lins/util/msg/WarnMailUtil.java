@@ -306,6 +306,9 @@ public class WarnMailUtil {
     }
 
     public static void sendLogMatchWarn(String hostname, String remark, String logFilePath, String matchedType, int count, Set<String> sourceIps, String matchedUser) {
+        if (!isAlertEnabled("logMatchWarnMail", () -> "yes")) {
+            return;
+        }
         try {
             String displayName = StringUtils.isEmpty(remark) ? hostname : remark;
             String now = DateUtil.getNowTime().toString().substring(0, 19);
