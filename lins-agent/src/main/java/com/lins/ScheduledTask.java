@@ -248,8 +248,9 @@ public class ScheduledTask {
                                     logMatchArray.add(match);
                                 }
                             }
+                            long readPos = raf.getFilePointer();
                             raf.close();
-                            _positions.put(fileKey, logFile.length());
+                            _positions.put(fileKey, readPos);
                         }
                     } catch (Exception e) {
                         logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
@@ -287,8 +288,9 @@ public class ScheduledTask {
             if (lm.getMatchSshLogout() == 1 && SSH_LOGOUT_PATTERN.matcher(line).find()) {
                 return "ssh_logout";
             }
+            return null;
         }
-        if (!StringUtils.isEmpty(lm.getCustomKeywords())) {
+        if ("custom".equals(type) && !StringUtils.isEmpty(lm.getCustomKeywords())) {
             String[] keywords = lm.getCustomKeywords().split(",");
             for (String kw : keywords) {
                 String trimmed = kw.trim();
