@@ -79,7 +79,7 @@
                             <td th:text="${item.state != null ? item.state : '-'}"></td>
                             <td th:text="${item.createTime != null ? #dates.format(item.createTime,'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
                             <td>
-                              <button type="button" th:onclick="view([[${item.id}]])" class="btn bg-gradient-primary btn-sm">查看</button>
+                              <button type="button" th:onclick="|view('${item.id}')|" class="btn bg-gradient-primary btn-sm">查看</button>
                             </td>
                           </tr>
                         </th:block>
