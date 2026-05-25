@@ -21,12 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.ScalarNode;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.nodes.ScalarStyle;
-import org.yaml.snakeyaml.representer.Representer;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -249,27 +243,7 @@ public class AlertController {
         }
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        Representer representer = new Representer() {
-            @Override
-            protected Node representScalar(Tag tag, String value, ScalarStyle style) {
-                if (tag == Tag.STR) {
-                    String lower = value.toLowerCase();
-                    if ("yes".equals(lower) || "no".equals(lower) || "true".equals(lower) || "false".equals(lower) || "on".equals(lower) || "off".equals(lower)) {
-                        style = ScalarStyle.SINGLE_QUOTED;
-                    }
-                }
-                return super.representScalar(tag, value, style);
-            }
-        };
-        Yaml yaml = new Yaml(new Constructor() {
-            @Override
-            protected Object constructObject(Node node) {
-                if (node instanceof ScalarNode) {
-                    return ((ScalarNode) node).getValue();
-                }
-                return super.constructObject(node);
-            }
-        }, representer, options);
+        Yaml yaml = new Yaml(options);
         Map<String, Object> config;
         try (InputStream in = new FileInputStream(yamlFile)) {
             Object loaded = yaml.load(in);
