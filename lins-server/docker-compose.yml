@@ -28,7 +28,7 @@ services:
     volumes:
       - /data/linscloud/lins-server/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
-      - /data/linscloud/lins-server/application.yml:/app/application.yml:ro
+      - /data/linscloud/lins-server/config:/app/config
     depends_on:
       mysql:
         condition: service_healthy

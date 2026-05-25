@@ -9,5 +9,8 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:8-jre
 WORKDIR /app
 COPY --from=builder /build/target/lins-server-release.jar app.jar
+COPY application.yml.default /app/application.yml.default
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 EXPOSE 9999
-ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-jar", "app.jar"]
+ENTRYPOINT ["/app/entrypoint.sh"]
