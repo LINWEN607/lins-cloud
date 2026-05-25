@@ -25,5 +25,7 @@ public interface ContainerStateMapper {
 
     public int deleteByDate(Map<String, Object> map) throws Exception;
 
+    public int deleteByHostname(Map<String, Object> map) throws Exception;
+
     public List<String> selectDistinctContainerName(Map<String, Object> params) throws Exception;
 }

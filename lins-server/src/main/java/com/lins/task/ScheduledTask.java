@@ -87,6 +87,8 @@ public class ScheduledTask {
     @Autowired
     private ContainerStateService containerStateService;
     @Autowired
+    ContainerStateMapper containerStateMapper;
+    @Autowired
     private RestUtil restUtil;
     @Autowired
     ConnectionUtil connectionUtil;
@@ -591,15 +593,15 @@ public class ScheduledTask {
 
     /**
      * 每天凌晨1:10执行
-     * 删除历史数据，15天
+     * 删除历史数据，7天
      */
     @Scheduled(cron = "0 10 1 * * ?")
     public void clearHisdataTask() {
         logger.info("定时清空历史数据任务开始----------" + DateUtil.getCurrentDateTime());
         WarnPools.clearOldData();//清空发告警邮件的记录
         String nowTime = DateUtil.getCurrentDateTime();
-        //15天前时间
-        String thrityDayBefore = DateUtil.getDateBefore(nowTime, 15);
+        //7天前时间
+        String thrityDayBefore = DateUtil.getDateBefore(nowTime, 7);
         Map<String, Object> paramsDel = new HashMap<String, Object>();
         try {
             paramsDel.put(StaticKeys.SEARCH_END_TIME, thrityDayBefore);
@@ -612,9 +614,11 @@ public class ScheduledTask {
                 sysLoadStateMapper.deleteByAccountAndDate(paramsDel);//删除负载状态监控信息
                 tcpStateMapper.deleteByAccountAndDate(paramsDel);//删除tcp监控信息
                 appStateMapper.deleteByDate(paramsDel);
-                //删除15天前的日志信息
+                //删除7天前的容器状态
+                containerStateMapper.deleteByDate(paramsDel);
+                //删除7天前的日志信息
                 logInfoMapper.deleteByDate(paramsDel);
-                //删除15天前数据库表统计信息
+                //删除7天前数据库表统计信息
                 dbTableCountService.deleteByDate(paramsDel);
 
                 logInfoService.save("定时清空历史数据完成", "定时清空历史数据完成：", StaticKeys.LOG_ERROR);

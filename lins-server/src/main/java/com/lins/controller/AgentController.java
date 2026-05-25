@@ -154,14 +154,24 @@ public class AgentController {
             }
             if (containerStateList != null) {
                 java.util.List<ContainerState> containerStateResList = JSONUtil.toList(containerStateList, ContainerState.class);
+                java.util.Set<String> hostnames = new java.util.HashSet<>();
                 for (ContainerState cs : containerStateResList) {
-                    cs.setId(com.lins.util.UUIDUtil.getUUID());
+                    hostnames.add(cs.getHostname());
                     cs.setCreateTime(new java.util.Date());
+                }
+                java.util.Map<String, Object> delParams = new java.util.HashMap<>();
+                for (String hostname : hostnames) {
+                    delParams.put("hostname", hostname);
                     try {
-                        containerStateService.save(cs);
+                        containerStateService.deleteByHostname(delParams);
                     } catch (Exception e) {
-                        logger.error("保存容器状态错误", e);
+                        logger.error("删除旧容器状态错误", e);
                     }
+                }
+                try {
+                    containerStateService.saveRecord(containerStateResList);
+                } catch (Exception e) {
+                    logger.error("保存容器状态错误", e);
                 }
             }
             if (logMonitorMatch != null) {

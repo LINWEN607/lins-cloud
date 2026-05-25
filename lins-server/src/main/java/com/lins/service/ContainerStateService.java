@@ -49,4 +49,8 @@ public class ContainerStateService {
         params.put("hostname", hostname);
         return containerStateMapper.selectDistinctContainerName(params);
     }
+
+    public void deleteByHostname(Map<String, Object> params) throws Exception {
+        containerStateMapper.deleteByHostname(params);
+    }
 }

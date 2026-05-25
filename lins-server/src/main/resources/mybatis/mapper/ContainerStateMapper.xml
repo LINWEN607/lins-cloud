@@ -36,6 +36,10 @@
 		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">#{item}</foreach>
 	</delete>
 
+	<delete id="deleteByHostname" parameterType="map">
+		DELETE FROM CONTAINER_STATE WHERE HOSTNAME = #{hostname}
+	</delete>
+
 	<delete id="deleteByDate" parameterType="map">
 		DELETE FROM CONTAINER_STATE WHERE <![CDATA[ CREATE_TIME <=#{endTime}]]>
 	</delete>
