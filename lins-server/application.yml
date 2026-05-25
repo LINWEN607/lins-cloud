@@ -1,0 +1,45 @@
+server:
+  port: 9999
+  servlet:
+    session:
+      timeout: 120m
+    context-path: /lins
+logging:
+  file:
+    path: /app/log
+spring:
+  application:
+    name: lins-server
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://mysql:3306/lins?characterEncoding=utf-8&autoReconnect=true&useSSL=false&allowMultiQueries=true
+    username: root
+    password: 123456
+    hikari:
+      validationTimeout: 3000
+      connectionTimeout: 60000
+      idleTimeout: 60000
+      minimumIdle: 10
+      maximumPoolSize: 10
+      maxLifeTime: 60000
+      connectionTestQuery: select 1
+  mvc:
+    static-path-pattern: /static/**
+  thymeleaf:
+    cache: false
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+base:
+  wgToken: lins
+  dbTableTimes: 3600000
+  heathTimes: 600000
+mail:
+  allWarnMail: yes
+  memWarnVal: 98
+  cpuWarnVal: 98
+  memWarnMail: yes
+  cpuWarnMail: yes
+  hostDownWarnMail: yes
+  appDownWarnMail: yes
+  heathWarnMail: yes
