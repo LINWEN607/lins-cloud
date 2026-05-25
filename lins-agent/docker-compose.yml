@@ -1,6 +1,6 @@
 services:
   agent:
-    image: lins-agent:latest
+    image: ghcr.io/linwen607/lins-agent:latest
     pid: host                   # ← 新增：共享宿主 PID 命名空间
     privileged: true
     network_mode: "host"
@@ -13,7 +13,6 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /etc:/host/etc:ro
-      - /data/linscloud/lins-agent/logs:/app/log
       - /etc/localtime:/etc/localtime:ro
       - /var/run:/var/run:ro
       - /var/log:/var/log:ro

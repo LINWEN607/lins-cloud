@@ -131,11 +131,6 @@ public class ContainerInfoController {
         return "redirect:/containerInfo/list";
     }
 
-    @RequestMapping(value = "edit")
-    public String edit(HttpServletRequest request) {
-        return "redirect:/containerInfo/list";
-    }
-
     @ResponseBody
     @RequestMapping(value = "containerNames")
     public List<String> containerNames(HttpServletRequest request) {

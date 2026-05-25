@@ -54,6 +54,13 @@
 		DELETE FROM SYSTEM_INFO WHERE ID = #{id}
 	</delete>
 	
+	<delete id="deleteById" parameterType="java.lang.String">
+		DELETE FROM SYSTEM_INFO WHERE ID IN
+		<foreach collection="array" item="item" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+	
 	<delete id="deleteByAccountAndDate"  parameterType="map">
 		DELETE FROM SYSTEM_INFO WHERE   <![CDATA[  CREATE_TIME <=#{endTime}]]>
 	</delete>
