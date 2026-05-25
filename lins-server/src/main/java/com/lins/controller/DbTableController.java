@@ -196,7 +196,7 @@ public class DbTableController {
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/dbTable/list";

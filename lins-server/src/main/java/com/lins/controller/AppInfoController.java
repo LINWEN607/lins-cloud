@@ -261,7 +261,7 @@ public class AppInfoController {
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(appInfo.getHostname() + ":" + appInfo.getAppPid(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/appInfo/list";

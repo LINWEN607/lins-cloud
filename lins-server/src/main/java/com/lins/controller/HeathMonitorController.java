@@ -163,7 +163,7 @@ public class HeathMonitorController {
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(HeathMonitor.getAppName(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/heathMonitor/list";
