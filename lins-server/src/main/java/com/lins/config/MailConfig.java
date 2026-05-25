@@ -48,7 +48,7 @@ public class MailConfig {
 
     public String getMemWarnMail() {
         if (StringUtils.isEmpty(memWarnMail)) {
-            return "true";
+            return "yes";
         }
         return memWarnMail;
     }
@@ -59,7 +59,7 @@ public class MailConfig {
 
     public String getCpuWarnMail() {
         if (StringUtils.isEmpty(cpuWarnMail)) {
-            return "true";
+            return "yes";
         }
         return cpuWarnMail;
     }
@@ -70,7 +70,7 @@ public class MailConfig {
 
     public String getHostDownWarnMail() {
         if (StringUtils.isEmpty(hostDownWarnMail)) {
-            return "true";
+            return "yes";
         }
         return hostDownWarnMail;
     }
@@ -81,7 +81,7 @@ public class MailConfig {
 
     public String getAppDownWarnMail() {
         if (StringUtils.isEmpty(appDownWarnMail)) {
-            return "true";
+            return "yes";
         }
         return appDownWarnMail;
     }
@@ -92,7 +92,7 @@ public class MailConfig {
 
     public String getHeathWarnMail() {
         if (StringUtils.isEmpty(heathWarnMail)) {
-            return "true";
+            return "yes";
         }
         return heathWarnMail;
     }
@@ -103,7 +103,7 @@ public class MailConfig {
 
     public String getContainerDownWarnMail() {
         if (StringUtils.isEmpty(containerDownWarnMail)) {
-            return "true";
+            return "yes";
         }
         return containerDownWarnMail;
     }
@@ -114,7 +114,7 @@ public class MailConfig {
 
     public String getLogMatchWarnMail() {
         if (StringUtils.isEmpty(logMatchWarnMail)) {
-            return "true";
+            return "yes";
         }
         return logMatchWarnMail;
     }
@@ -125,7 +125,7 @@ public class MailConfig {
 
     public String getAllWarnMail() {
         if (StringUtils.isEmpty(allWarnMail)) {
-            return "true";
+            return "yes";
         }
         return allWarnMail;
     }

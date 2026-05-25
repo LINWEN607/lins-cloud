@@ -39,6 +39,14 @@ public class SystemConfigService {
         }
     }
 
+    public void deleteByKey(String key) {
+        try {
+            systemConfigMapper.deleteByKey(key);
+        } catch (Exception e) {
+            logger.warn("删除系统配置失败，key={}", key, e);
+        }
+    }
+
     @Autowired
     private SystemConfigMapper systemConfigMapper;
 }

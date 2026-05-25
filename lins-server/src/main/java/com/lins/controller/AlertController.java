@@ -19,10 +19,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -223,10 +226,35 @@ public class AlertController {
     private void saveConfigVal(String key, String value) {
         if (StringUtils.isEmpty(value)) return;
         try {
-            systemConfigService.setVal(key, value);
+            writeYamlConfig(key, value);
+            systemConfigService.deleteByKey(key);
             WarnMailUtil.runtimeConfig.put(key, value);
         } catch (Exception e) {
             logger.error("保存配置项失败，key={}", key, e);
+        }
+    }
+
+    private void writeYamlConfig(String key, String value) {
+        File yamlFile = new File("config/application.yml");
+        if (!yamlFile.exists()) {
+            logger.warn("config/application.yml 不存在，跳过文件写入");
+            return;
+        }
+        Yaml yaml = new Yaml();
+        Map<String, Object> config;
+        try (InputStream in = new FileInputStream(yamlFile)) {
+            Object loaded = yaml.load(in);
+            config = loaded instanceof Map ? (Map<String, Object>) loaded : new LinkedHashMap<>();
+        } catch (Exception e) {
+            logger.error("读取 application.yml 失败", e);
+            return;
+        }
+        Map<String, Object> mail = (Map<String, Object>) config.computeIfAbsent("mail", k -> new LinkedHashMap<>());
+        mail.put(key, value);
+        try (Writer writer = new FileWriter(yamlFile)) {
+            yaml.dump(config, writer);
+        } catch (Exception e) {
+            logger.error("写入 application.yml 失败", e);
         }
     }
 }

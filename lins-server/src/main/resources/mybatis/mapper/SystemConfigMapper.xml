@@ -21,6 +21,11 @@
 		WHERE CONFIG_KEY = #{configKey}
 	</update>
 
+	<delete id="deleteByKey" parameterType="java.lang.String">
+		DELETE FROM SYSTEM_CONFIG
+		WHERE CONFIG_KEY = #{configKey}
+	</delete>
+
 	<select id="selectByKey" parameterType="java.lang.String" resultMap="resultMap">
 		SELECT <include refid="tableColumnList" />
 		FROM SYSTEM_CONFIG

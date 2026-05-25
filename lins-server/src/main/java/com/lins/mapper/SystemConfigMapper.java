@@ -14,5 +14,7 @@ public interface SystemConfigMapper {
 
     int updateByKey(SystemConfig systemConfig) throws Exception;
 
+    void deleteByKey(String configKey) throws Exception;
+
     List<SystemConfig> selectAll() throws Exception;
 }
