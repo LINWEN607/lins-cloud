@@ -70,6 +70,7 @@ public class AlertController {
             model.addAttribute("appDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("appDownWarnMail", mailConfig.getAppDownWarnMail()));
             model.addAttribute("heathWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("heathWarnMail", mailConfig.getHeathWarnMail()));
             model.addAttribute("containerDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("containerDownWarnMail", mailConfig.getContainerDownWarnMail()));
+            model.addAttribute("logMatchWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("logMatchWarnMail", mailConfig.getLogMatchWarnMail()));
         } catch (Exception e) {
             logger.error("查询告警设置错误", e);
             logInfoService.save("查询告警设置错误", e.toString(), StaticKeys.LOG_ERROR);
@@ -109,6 +110,7 @@ public class AlertController {
             model.addAttribute("appDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("appDownWarnMail", mailConfig.getAppDownWarnMail()));
             model.addAttribute("heathWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("heathWarnMail", mailConfig.getHeathWarnMail()));
             model.addAttribute("containerDownWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("containerDownWarnMail", mailConfig.getContainerDownWarnMail()));
+            model.addAttribute("logMatchWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("logMatchWarnMail", mailConfig.getLogMatchWarnMail()));
         } catch (Exception e) {
             logger.error("查询告警配置错误", e);
         }
@@ -210,6 +212,7 @@ public class AlertController {
             saveConfigVal("appDownWarnMail", request.getParameter("appDownWarnMail"));
             saveConfigVal("heathWarnMail", request.getParameter("heathWarnMail"));
             saveConfigVal("containerDownWarnMail", request.getParameter("containerDownWarnMail"));
+            saveConfigVal("logMatchWarnMail", request.getParameter("logMatchWarnMail"));
         } catch (Exception e) {
             logger.error("保存告警配置错误", e);
             logInfoService.save("保存告警配置错误", e.toString(), StaticKeys.LOG_ERROR);

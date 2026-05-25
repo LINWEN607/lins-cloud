@@ -306,7 +306,7 @@ public class WarnMailUtil {
     }
 
     public static void sendLogMatchWarn(String hostname, String logFilePath, String matchedLine) {
-        if (!isAlertEnabled("logMatchWarnMail", () -> "yes")) {
+        if (!isAlertEnabled("logMatchWarnMail", mailConfig::getLogMatchWarnMail)) {
             return;
         }
         try {

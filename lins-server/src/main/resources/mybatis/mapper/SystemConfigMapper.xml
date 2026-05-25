@@ -27,4 +27,9 @@
 		WHERE CONFIG_KEY = #{configKey}
 	</select>
 
+	<select id="selectAll" resultMap="resultMap">
+		SELECT <include refid="tableColumnList" />
+		FROM SYSTEM_CONFIG
+	</select>
+
 </mapper>

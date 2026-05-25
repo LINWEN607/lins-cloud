@@ -8,6 +8,7 @@ import com.lins.entity.*;
 import com.lins.service.ContainerInfoService;
 import com.lins.service.ContainerStateService;
 import com.lins.service.LogInfoService;
+import com.lins.service.LogMonitorService;
 import com.lins.service.SystemInfoService;
 import com.lins.util.TokenUtils;
 import com.lins.util.msg.WarnMailUtil;
@@ -54,6 +55,8 @@ public class AgentController {
 
     @Resource
     private LogInfoService logInfoService;
+    @Resource
+    private LogMonitorService logMonitorService;
     @Resource
     private SystemInfoService systemInfoService;
     @Resource
@@ -181,6 +184,19 @@ public class AgentController {
                     String hostname = match.getStr("hostname");
                     String logFilePath = match.getStr("logFilePath");
                     String matchedLine = match.getStr("matchedLine");
+                    String logMonitorId = match.getStr("logMonitorId");
+                    // 检查规则的ENABLE_ALERT
+                    if (logMonitorId != null) {
+                        try {
+                            LogMonitor lm = logMonitorService.selectById(logMonitorId);
+                            if (lm == null || lm.getEnableAlert() == null || lm.getEnableAlert() != 1) {
+                                continue;
+                            }
+                        } catch (Exception e) {
+                            logger.warn("查询日志监控规则失败, id={}", logMonitorId);
+                            continue;
+                        }
+                    }
                     String normalized = stripLogPrefix(matchedLine);
                     String cacheKey = hostname + "|" + logFilePath + "|" + normalized;
                     Long lastTime = logMatchDedupCache.get(cacheKey);

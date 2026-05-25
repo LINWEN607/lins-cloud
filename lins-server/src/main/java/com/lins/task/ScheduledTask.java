@@ -89,6 +89,8 @@ public class ScheduledTask {
     @Autowired
     ContainerStateMapper containerStateMapper;
     @Autowired
+    SystemConfigMapper systemConfigMapper;
+    @Autowired
     private RestUtil restUtil;
     @Autowired
     ConnectionUtil connectionUtil;
@@ -114,6 +116,10 @@ public class ScheduledTask {
             List<DingtalkConfig> dingtalkList = dingtalkConfigService.selectAllByParams(params);
             if (dingtalkList.size() > 0) {
                 StaticKeys.dingtalkConfig = dingtalkList.get(0);
+            }
+            List<SystemConfig> configs = systemConfigMapper.selectAll();
+            for (SystemConfig sc : configs) {
+                WarnMailUtil.runtimeConfig.put(sc.getConfigKey(), sc.getConfigValue());
             }
         } catch (Exception e) {
             logger.error("初始化操作错误", e);

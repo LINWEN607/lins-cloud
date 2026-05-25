@@ -20,6 +20,7 @@ public class MailConfig {
     private String appDownWarnMail;
     private String heathWarnMail;
     private String containerDownWarnMail;
+    private String logMatchWarnMail;
     private String allWarnMail;
 
 
@@ -109,6 +110,17 @@ public class MailConfig {
 
     public void setContainerDownWarnMail(String containerDownWarnMail) {
         this.containerDownWarnMail = containerDownWarnMail;
+    }
+
+    public String getLogMatchWarnMail() {
+        if (StringUtils.isEmpty(logMatchWarnMail)) {
+            return "true";
+        }
+        return logMatchWarnMail;
+    }
+
+    public void setLogMatchWarnMail(String logMatchWarnMail) {
+        this.logMatchWarnMail = logMatchWarnMail;
     }
 
     public String getAllWarnMail() {

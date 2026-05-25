@@ -43,3 +43,4 @@ mail:
   hostDownWarnMail: yes
   appDownWarnMail: yes
   heathWarnMail: yes
+  logMatchWarnMail: yes
