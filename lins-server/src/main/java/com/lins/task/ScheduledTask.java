@@ -515,6 +515,11 @@ public class ScheduledTask {
                 List<SystemInfo> SYSTEM_INFO_LIST = new ArrayList<SystemInfo>();
                 SYSTEM_INFO_LIST.addAll(BatchData.SYSTEM_INFO_LIST);
                 BatchData.SYSTEM_INFO_LIST.clear();
+                Map<String, SystemInfo> systemUniqueMap = new LinkedHashMap<String, SystemInfo>();
+                for (SystemInfo si : SYSTEM_INFO_LIST) {
+                    systemUniqueMap.put(si.getHostname(), si);
+                }
+                SYSTEM_INFO_LIST = new ArrayList<SystemInfo>(systemUniqueMap.values());
                 List<SystemInfo> updateList = new ArrayList<SystemInfo>();
                 List<SystemInfo> insertList = new ArrayList<SystemInfo>();
                 List<SystemInfo> savedList = systemInfoService.selectAllByParams(paramsDel);
@@ -543,22 +548,26 @@ public class ScheduledTask {
                 List<AppInfo> APP_INFO_LIST = new ArrayList<AppInfo>();
                 APP_INFO_LIST.addAll(BatchData.APP_INFO_LIST);
                 BatchData.APP_INFO_LIST.clear();
-
+                Map<String, AppInfo> appUniqueMap = new LinkedHashMap<String, AppInfo>();
+                for (AppInfo ai : APP_INFO_LIST) {
+                    appUniqueMap.put(ai.getHostname() + "_" + ai.getAppPid(), ai);
+                }
+                APP_INFO_LIST = new ArrayList<AppInfo>(appUniqueMap.values());
                 List<AppInfo> updateList = new ArrayList<AppInfo>();
                 List<AppInfo> insertList = new ArrayList<AppInfo>();
                 List<AppInfo> savedList = appInfoService.selectAllByParams(paramsDel);
-                for (AppInfo systemInfo : APP_INFO_LIST) {
+                for (AppInfo appInfo : APP_INFO_LIST) {
                     boolean issaved = false;
-                    for (AppInfo systemInfoS : savedList) {
-                        if (systemInfoS.getHostname().equals(systemInfo.getHostname()) && systemInfoS.getAppPid().equals(systemInfo.getAppPid())) {
-                            systemInfo.setId(systemInfoS.getId());
-                            updateList.add(systemInfo);
+                    for (AppInfo appInfoS : savedList) {
+                        if (appInfoS.getHostname().equals(appInfo.getHostname()) && appInfoS.getAppPid().equals(appInfo.getAppPid())) {
+                            appInfo.setId(appInfoS.getId());
+                            updateList.add(appInfo);
                             issaved = true;
                             break;
                         }
                     }
                     if (!issaved) {
-                        insertList.add(systemInfo);
+                        insertList.add(appInfo);
                     }
                 }
                 appInfoService.updateRecord(updateList);
