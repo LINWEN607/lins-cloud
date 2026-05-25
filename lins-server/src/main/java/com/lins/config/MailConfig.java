@@ -47,10 +47,10 @@ public class MailConfig {
     }
 
     public String getMemWarnMail() {
-        if (StringUtils.isEmpty(memWarnMail)) {
+        if (StringUtils.isEmpty(memWarnMail) || "yes".equals(memWarnMail) || "true".equals(memWarnMail)) {
             return "yes";
         }
-        return memWarnMail;
+        return "false";
     }
 
     public void setMemWarnMail(String memWarnMail) {
@@ -58,10 +58,10 @@ public class MailConfig {
     }
 
     public String getCpuWarnMail() {
-        if (StringUtils.isEmpty(cpuWarnMail)) {
+        if (StringUtils.isEmpty(cpuWarnMail) || "yes".equals(cpuWarnMail) || "true".equals(cpuWarnMail)) {
             return "yes";
         }
-        return cpuWarnMail;
+        return "false";
     }
 
     public void setCpuWarnMail(String cpuWarnMail) {
@@ -69,10 +69,10 @@ public class MailConfig {
     }
 
     public String getHostDownWarnMail() {
-        if (StringUtils.isEmpty(hostDownWarnMail)) {
+        if (StringUtils.isEmpty(hostDownWarnMail) || "yes".equals(hostDownWarnMail) || "true".equals(hostDownWarnMail)) {
             return "yes";
         }
-        return hostDownWarnMail;
+        return "false";
     }
 
     public void setHostDownWarnMail(String hostDownWarnMail) {
@@ -80,10 +80,10 @@ public class MailConfig {
     }
 
     public String getAppDownWarnMail() {
-        if (StringUtils.isEmpty(appDownWarnMail)) {
+        if (StringUtils.isEmpty(appDownWarnMail) || "yes".equals(appDownWarnMail) || "true".equals(appDownWarnMail)) {
             return "yes";
         }
-        return appDownWarnMail;
+        return "false";
     }
 
     public void setAppDownWarnMail(String appDownWarnMail) {
@@ -91,10 +91,10 @@ public class MailConfig {
     }
 
     public String getHeathWarnMail() {
-        if (StringUtils.isEmpty(heathWarnMail)) {
+        if (StringUtils.isEmpty(heathWarnMail) || "yes".equals(heathWarnMail) || "true".equals(heathWarnMail)) {
             return "yes";
         }
-        return heathWarnMail;
+        return "false";
     }
 
     public void setHeathWarnMail(String heathWarnMail) {
@@ -102,10 +102,10 @@ public class MailConfig {
     }
 
     public String getContainerDownWarnMail() {
-        if (StringUtils.isEmpty(containerDownWarnMail)) {
+        if (StringUtils.isEmpty(containerDownWarnMail) || "yes".equals(containerDownWarnMail) || "true".equals(containerDownWarnMail)) {
             return "yes";
         }
-        return containerDownWarnMail;
+        return "false";
     }
 
     public void setContainerDownWarnMail(String containerDownWarnMail) {
@@ -113,10 +113,10 @@ public class MailConfig {
     }
 
     public String getLogMatchWarnMail() {
-        if (StringUtils.isEmpty(logMatchWarnMail)) {
+        if (StringUtils.isEmpty(logMatchWarnMail) || "yes".equals(logMatchWarnMail) || "true".equals(logMatchWarnMail)) {
             return "yes";
         }
-        return logMatchWarnMail;
+        return "false";
     }
 
     public void setLogMatchWarnMail(String logMatchWarnMail) {
@@ -124,10 +124,10 @@ public class MailConfig {
     }
 
     public String getAllWarnMail() {
-        if (StringUtils.isEmpty(allWarnMail)) {
+        if (StringUtils.isEmpty(allWarnMail) || "yes".equals(allWarnMail) || "true".equals(allWarnMail)) {
             return "yes";
         }
-        return allWarnMail;
+        return "false";
     }
 
     public void setAllWarnMail(String allWarnMail) {
