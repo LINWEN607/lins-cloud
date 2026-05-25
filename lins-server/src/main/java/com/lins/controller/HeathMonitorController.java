@@ -158,7 +158,7 @@ public class HeathMonitorController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 HeathMonitor = heathMonitorService.selectById(request.getParameter("id"));
-                logInfoService.save("删除服务心跳监控：" + HeathMonitor.getAppName(), "删除服务心跳监控：" + HeathMonitor.getAppName() + "：" + HeathMonitor.getHeathUrl(), StaticKeys.LOG_ERROR);
+                logInfoService.save("删除服务心跳监控：" + HeathMonitor.getAppName(), "删除服务心跳监控：" + HeathMonitor.getAppName() + "：" + HeathMonitor.getHeathUrl(), StaticKeys.LOG_OPERATION);
                 heathMonitorService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {

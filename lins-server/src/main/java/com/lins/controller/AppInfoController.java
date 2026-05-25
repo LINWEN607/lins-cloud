@@ -256,7 +256,7 @@ public class AppInfoController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 appInfo = appInfoService.selectById(request.getParameter("id"));
-                logInfoService.save("删除进程：" + appInfo.getHostname(), "删除进程：" + appInfo.getHostname() + "：" + appInfo.getAppPid(), StaticKeys.LOG_ERROR);
+                logInfoService.save("删除进程：" + appInfo.getHostname(), "删除进程：" + appInfo.getHostname() + "：" + appInfo.getAppPid(), StaticKeys.LOG_OPERATION);
                 appInfoService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {

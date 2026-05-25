@@ -171,7 +171,7 @@ public class DbInfoController {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 DbInfo = dbInfoService.selectById(request.getParameter("id"));
                 logInfoService.save("删除数据源：" + DbInfo.getAliasName(), "删除数据源：" + DbInfo.getIp() + "：" + DbInfo.getPort() +
-                        "，数据库别名" + DbInfo.getAliasName(), StaticKeys.LOG_ERROR);
+                        "，数据库别名" + DbInfo.getAliasName(), StaticKeys.LOG_OPERATION);
                 dbInfoService.deleteById(request.getParameter("id").split(","));
                 dbTableService.deleteByDbInfoId(DbInfo.getId());
             }

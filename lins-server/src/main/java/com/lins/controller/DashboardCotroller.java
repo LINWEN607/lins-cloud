@@ -327,7 +327,7 @@ public class DashboardCotroller {
                     if (!StringUtils.isEmpty(sys.getHostname())) {
                         hostInfoService.deleteByIp(sys.getHostname().split(","));
                     }
-                    logInfoService.save("删除主机：" + sys.getHostname(), sys.getHostname(), StaticKeys.LOG_ERROR);
+                    logInfoService.save("删除主机：" + sys.getHostname(), sys.getHostname(), StaticKeys.LOG_OPERATION);
                 }
                 systemInfoService.deleteById(ids);
             }

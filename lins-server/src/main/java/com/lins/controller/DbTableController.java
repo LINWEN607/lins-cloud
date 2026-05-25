@@ -76,7 +76,7 @@ public class DbTableController {
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询数据表信息错误", e);
-            logInfoService.save("查询数据表信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("查询数据表信息错误", e.toString(), StaticKeys.LOG_OPERATION);
 
         }
         return "mysql/list";
@@ -114,7 +114,7 @@ public class DbTableController {
             }
         } catch (Exception e) {
             logger.error("保存数据表错误：", e);
-            logInfoService.save("保存数据表错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("保存数据表错误", e.toString(), StaticKeys.LOG_OPERATION);
         }
         return "redirect:/dbTable/list";
     }
@@ -141,7 +141,7 @@ public class DbTableController {
             model.addAttribute("dbTable", dbTableInfo);
         } catch (Exception e) {
             logger.error("查看数据表错误：", e);
-            logInfoService.save("查看数据表错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("查看数据表错误", e.toString(), StaticKeys.LOG_OPERATION);
         }
         return "mysql/add";
     }
@@ -170,7 +170,7 @@ public class DbTableController {
             }
         } catch (Exception e) {
             logger.error("查看数据表图表统计错误：", e);
-            logInfoService.save("查看数据表图表统计错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("查看数据表图表统计错误", e.toString(), StaticKeys.LOG_OPERATION);
         }
         return "mysql/view";
     }
@@ -191,7 +191,7 @@ public class DbTableController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 DbTable dbTable = dbTableService.selectById(request.getParameter("id"));
-                logInfoService.save("删除数据表：" + dbTable.getTableName(), "删除数据表：" + dbTable.getTableName(), StaticKeys.LOG_ERROR);
+                logInfoService.save("删除数据表：" + dbTable.getTableName(), "删除数据表：" + dbTable.getTableName(), StaticKeys.LOG_OPERATION);
                 dbTableService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {

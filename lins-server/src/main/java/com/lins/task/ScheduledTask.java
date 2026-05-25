@@ -636,7 +636,7 @@ public class ScheduledTask {
                 //删除7天前数据库表统计信息
                 dbTableCountService.deleteByDate(paramsDel);
 
-                logInfoService.save("定时清空历史数据完成", "定时清空历史数据完成：", StaticKeys.LOG_ERROR);
+                logInfoService.save("定时清空历史数据完成", "定时清空历史数据完成：", null);
             }
             //执行删除操作end
 
