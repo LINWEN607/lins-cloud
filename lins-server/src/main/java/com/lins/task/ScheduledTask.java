@@ -156,7 +156,7 @@ public class ScheduledTask {
                         systemInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
                         logInfo.setHostname(systemInfo.getRemark());
-                        logInfo.setInfoContent("超过10分钟未上报状态，可能已下线：" + systemInfo.getHostname());
+                        logInfo.setInfoContent("超过1分钟未上报状态，可能已下线：" + systemInfo.getHostname());
                         logInfo.setState(StaticKeys.LOG_ERROR);
                         logInfoList.add(logInfo);
                         updateList.add(systemInfo);
@@ -218,7 +218,7 @@ public class ScheduledTask {
                         appInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
                         logInfo.setHostname(WarnMailUtil.getRemarkByHostname(appInfo.getHostname()));
-                        logInfo.setInfoContent("超过10分钟未上报状态，可能已下线IP：" + appInfo.getHostname() + "，名称：" + appInfo.getAppName() + "，进程ID：" + appInfo.getAppPid());
+                        logInfo.setInfoContent("超过1分钟未上报状态，可能已下线IP：" + appInfo.getHostname() + "，名称：" + appInfo.getAppName() + "，进程ID：" + appInfo.getAppPid());
                         logInfo.setState(StaticKeys.LOG_ERROR);
                         logInfoList.add(logInfo);
                         updateList.add(appInfo);
@@ -290,7 +290,7 @@ public class ScheduledTask {
                             containerInfo.setState(StaticKeys.DOWN_STATE);
                             LogInfo logInfo = new LogInfo();
                             logInfo.setHostname(WarnMailUtil.getRemarkByHostname(containerInfo.getHostname()));
-                            logInfo.setInfoContent("超过10分钟未上报状态，可能已下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName());
+                            logInfo.setInfoContent("超过1分钟未上报状态，可能已下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName());
                             logInfo.setState(StaticKeys.LOG_ERROR);
                             logInfoList.add(logInfo);
                             updateList.add(containerInfo);
