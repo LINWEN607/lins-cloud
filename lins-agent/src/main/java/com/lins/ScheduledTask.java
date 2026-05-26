@@ -69,7 +69,7 @@ public class ScheduledTask {
         JSONObject jsonObject = new JSONObject();
         LogInfo logInfo = new LogInfo();
         Timestamp t = FormatUtil.getNowTime();
-        logInfo.setHostname(commonConfig.getBindIp() + "：Agent错误");
+        logInfo.setHostname(commonConfig.getBindIp());
         logInfo.setCreateTime(t);
         try {
             oshi.SystemInfo si = new oshi.SystemInfo();
@@ -287,7 +287,7 @@ public class ScheduledTask {
         JSONObject jsonObject = new JSONObject();
         LogInfo logInfo = new LogInfo();
         Timestamp t = FormatUtil.getNowTime();
-        logInfo.setHostname(commonConfig.getBindIp() + "：Agent获取进程列表错误");
+        logInfo.setHostname(commonConfig.getBindIp());
         logInfo.setCreateTime(t);
         try {
             JSONObject paramsJson = new JSONObject();
@@ -320,7 +320,7 @@ public class ScheduledTask {
     public void logMonitorListTask() {
         LogInfo logInfo = new LogInfo();
         Timestamp t = FormatUtil.getNowTime();
-        logInfo.setHostname(commonConfig.getBindIp() + "：Agent获取日志监控配置错误");
+        logInfo.setHostname(commonConfig.getBindIp());
         logInfo.setCreateTime(t);
         try {
             JSONObject paramsJson = new JSONObject();

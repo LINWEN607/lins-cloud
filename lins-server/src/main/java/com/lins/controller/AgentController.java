@@ -102,6 +102,7 @@ public class AgentController {
             if (logInfo != null) {
                 LogInfo bean = new LogInfo();
                 BeanUtil.copyProperties(logInfo, bean);
+                bean.setHostname(WarnMailUtil.getRemarkByHostname(bean.getHostname()));
                 BatchData.LOG_INFO_LIST.add(bean);
             }
             if (cpuState != null) {
