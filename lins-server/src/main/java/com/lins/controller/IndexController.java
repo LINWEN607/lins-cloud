@@ -10,10 +10,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * @version v2.3
  * @ClassName:IndexController.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: AppInfoController.java
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Configuration
 public class IndexController implements WebMvcConfigurer {

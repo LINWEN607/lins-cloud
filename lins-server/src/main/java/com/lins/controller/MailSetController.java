@@ -22,10 +22,10 @@ import java.util.Map;
 /**
  * @version v2.3
  * @ClassName:MailSetController.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: MailSetController.java
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Controller
 @RequestMapping("/mailset")

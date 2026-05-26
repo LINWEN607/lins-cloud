@@ -5,10 +5,10 @@ import com.lins.entity.BaseEntity;
 /**
  * @version v2.3
  * @ClassName:ChartInfo.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: app端口信息
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class ChartInfo extends BaseEntity {
 

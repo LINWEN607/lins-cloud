@@ -5,10 +5,10 @@ import com.lins.entity.BaseEntity;
 /**
  * @version v2.3
  * @ClassName:ManyLineDto.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: 表单提交返回信息
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class ManyLineDto extends BaseEntity {
 

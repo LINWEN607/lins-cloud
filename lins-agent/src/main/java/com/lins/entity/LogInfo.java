@@ -5,10 +5,10 @@ import java.util.Date;
 /**
  * @version V2.3
  * @ClassName:LogInfo.java
- * @author: wgcloud
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: 日志信息
- * @Copyright: 2017-2021 www.wgstart.com. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class LogInfo extends BaseEntity {
 

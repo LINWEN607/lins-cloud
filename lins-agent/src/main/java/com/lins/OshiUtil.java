@@ -20,10 +20,10 @@ import java.util.List;
 /**
  * @version v3.3
  * @ClassName: OshiUtil
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2021年11月19日
  * @Description: Oshi工具类
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class OshiUtil {
 

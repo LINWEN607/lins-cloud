@@ -30,10 +30,10 @@ import java.util.regex.Pattern;
 /**
  * @version V2.3
  * @ClassName:ScheduledTask.java
- * @author: wgcloud
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: ScheduledTask.java
- * @Copyright: 2017-2021 www.wgstart.com. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Component
 public class ScheduledTask {

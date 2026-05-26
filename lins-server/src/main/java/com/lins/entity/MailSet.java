@@ -5,10 +5,10 @@ import java.util.Date;
 /**
  * @version v2.3
  * @ClassName:DiskIoState.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: 查看磁盘IO使用情况
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class MailSet extends BaseEntity {
 

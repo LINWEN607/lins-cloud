@@ -15,10 +15,10 @@ import java.util.*;
 /**
  * @version v2.3
  * @ClassName:DeskStateService.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: DeskStateService.java
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Service
 public class DeskStateService {

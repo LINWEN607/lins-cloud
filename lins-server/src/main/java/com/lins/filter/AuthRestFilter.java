@@ -16,10 +16,10 @@ import java.io.IOException;
 /**
  * @version v2.3
  * @ClassName:AuthRestFilter.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: http请求过滤器，拦截不是从路由过来的请求
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @WebFilter(filterName = "authRestFilter", urlPatterns = {"/*"})
 public class AuthRestFilter implements Filter {

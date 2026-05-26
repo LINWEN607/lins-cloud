@@ -33,10 +33,10 @@ import java.util.Map;
 /**
  * @version v2.3
  * @ClassName:AppInfoController.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: AppInfoController.java
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Controller
 @RequestMapping("/appInfo")

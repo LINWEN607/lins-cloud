@@ -13,10 +13,10 @@ import java.security.NoSuchAlgorithmException;
 /**
  * @version V2.3
  * @ClassName:MD5Utils.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: Md5加密处理
- * @Copyright: 2017-2021 www.wgstart.com. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @SuppressWarnings("unused")
 public class MD5Utils {

@@ -29,10 +29,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * @version v2.3
  * @ClassName:ScheduledTask.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: ScheduledTask.java
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 @Component
 public class ScheduledTask {

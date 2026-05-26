@@ -3,10 +3,10 @@ package com.lins.entity;
 /**
  * @version v2.3
  * @ClassName:DashboardView.java
- * @author: http://www.wgstart.com
+ * @author: lins
  * @date: 2019年11月16日
  * @Description: 主面板概要信息
- * @Copyright: 2017-2021 wgcloud. All rights reserved.
+ * @Copyright: 2017-2021 lins. All rights reserved.
  */
 public class DashboardView extends BaseEntity {
 
