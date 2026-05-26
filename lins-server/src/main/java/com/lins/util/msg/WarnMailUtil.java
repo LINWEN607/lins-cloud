@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +40,20 @@ public class WarnMailUtil {
     private static LogInfoService logInfoService = (LogInfoService) ApplicationContextHelper.getBean(LogInfoService.class);
     private static SystemInfoService systemInfoService = (SystemInfoService) ApplicationContextHelper.getBean(SystemInfoService.class);
     private static MailConfig mailConfig = (MailConfig) ApplicationContextHelper.getBean(MailConfig.class);
+
+    public static String getRemarkByHostname(String hostname) {
+        try {
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("hostname", hostname);
+            List<SystemInfo> list = systemInfoService.selectAllByParams(params);
+            if (list != null && list.size() > 0 && StringUtils.isNotBlank(list.get(0).getRemark())) {
+                return list.get(0).getRemark();
+            }
+        } catch (Exception e) {
+            logger.error("查询主机备注错误", e);
+        }
+        return hostname;
+    }
 
     private static String getConfig(String key) {
         String val = runtimeConfig.get(key);
@@ -102,7 +118,7 @@ public class WarnMailUtil {
                 String commContent = "服务器：" + memState.getHostname() + ",内存使用率为" + Double.valueOf(memState.getUsePer()) + "%，可能存在异常，请查看";
                 sendToAllChannels(title, commContent);
                 WarnPools.MEM_WARN_MAP.put(key, "1");
-                logInfoService.save(memState.getHostname(), commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(getRemarkByHostname(memState.getHostname()), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送内存告警失败：", e);
                 logInfoService.save("", "发送内存告警错误", StaticKeys.LOG_ERROR);
@@ -133,7 +149,7 @@ public class WarnMailUtil {
                 String commContent = "服务器：" + cpuState.getHostname() + ",CPU使用率为" + Double.valueOf(cpuState.getSys()) + "%，可能存在异常，请查看";
                 sendToAllChannels(title, commContent);
                 WarnPools.MEM_WARN_MAP.put(key, "1");
-                logInfoService.save(cpuState.getHostname(), commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(getRemarkByHostname(cpuState.getHostname()), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送CPU告警失败：", e);
                 logInfoService.save("", "发送CPU告警错误", StaticKeys.LOG_ERROR);
@@ -250,14 +266,14 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(appInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(getRemarkByHostname(appInfo.getHostname()), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
                 String title = "进程恢复上线通知：" + appInfo.getHostname() + "，" + appInfo.getAppName();
                 String commContent = "进程恢复上线通知：" + appInfo.getHostname() + "，" + appInfo.getAppName();
                 sendToAllChannels(title, commContent);
-                logInfoService.save(appInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(getRemarkByHostname(appInfo.getHostname()), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送进程恢复上线通知失败：", e);
                 logInfoService.save("", "发送进程恢复上线通知错误", StaticKeys.LOG_ERROR);
@@ -289,14 +305,14 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(containerInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(getRemarkByHostname(containerInfo.getHostname()), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
                 String title = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
                 String commContent = "容器恢复上线通知：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName();
                 sendToAllChannels(title, commContent);
-                logInfoService.save(containerInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+                logInfoService.save(getRemarkByHostname(containerInfo.getHostname()), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送容器恢复上线通知失败：", e);
                 logInfoService.save("", "发送容器恢复上线通知错误", StaticKeys.LOG_ERROR);
@@ -319,7 +335,7 @@ public class WarnMailUtil {
             sb.append("匹配内容：").append(matchedLine);
             String commContent = sb.toString().trim();
             sendToAllChannels(title, commContent);
-            logInfoService.save(hostname, commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(getRemarkByHostname(hostname), commContent, StaticKeys.LOG_ERROR);
         } catch (Exception e) {
             logger.error("发送日志匹配告警失败：", e);
             logInfoService.save("", "发送日志匹配告警错误", StaticKeys.LOG_ERROR);

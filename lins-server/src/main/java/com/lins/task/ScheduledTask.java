@@ -155,7 +155,7 @@ public class ScheduledTask {
                         WarnPools.MEM_WARN_MAP.put(systemInfo.getId(), "PENDING");
                         systemInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
-                        logInfo.setHostname("主机下线：" + systemInfo.getHostname());
+                        logInfo.setHostname(systemInfo.getRemark());
                         logInfo.setInfoContent("超过10分钟未上报状态，可能已下线：" + systemInfo.getHostname());
                         logInfo.setState(StaticKeys.LOG_ERROR);
                         logInfoList.add(logInfo);
@@ -217,7 +217,7 @@ public class ScheduledTask {
                         WarnPools.MEM_WARN_MAP.put(appInfo.getId(), "PENDING");
                         appInfo.setState(StaticKeys.DOWN_STATE);
                         LogInfo logInfo = new LogInfo();
-                        logInfo.setHostname("进程下线IP：" + appInfo.getHostname() + "，名称：" + appInfo.getAppName());
+                        logInfo.setHostname(WarnMailUtil.getRemarkByHostname(appInfo.getHostname()));
                         logInfo.setInfoContent("超过10分钟未上报状态，可能已下线IP：" + appInfo.getHostname() + "，名称：" + appInfo.getAppName() + "，进程ID：" + appInfo.getAppPid());
                         logInfo.setState(StaticKeys.LOG_ERROR);
                         logInfoList.add(logInfo);
@@ -289,7 +289,7 @@ public class ScheduledTask {
                             WarnPools.MEM_WARN_MAP.put(containerInfo.getId(), "PENDING");
                             containerInfo.setState(StaticKeys.DOWN_STATE);
                             LogInfo logInfo = new LogInfo();
-                            logInfo.setHostname("容器下线：" + containerInfo.getHostname());
+                            logInfo.setHostname(WarnMailUtil.getRemarkByHostname(containerInfo.getHostname()));
                             logInfo.setInfoContent("超过10分钟未上报状态，可能已下线：" + containerInfo.getHostname() + "，" + containerInfo.getContainerName());
                             logInfo.setState(StaticKeys.LOG_ERROR);
                             logInfoList.add(logInfo);
