@@ -226,8 +226,10 @@ public class ScheduledTask {
                             RandomAccessFile raf = new RandomAccessFile(logFile, "r");
                             raf.seek(offset);
                             String line;
+                            int lineCount = 0;
                             while ((line = raf.readLine()) != null) {
                                 if (line.trim().length() == 0) continue;
+                                lineCount++;
                                 String lineStr = new String(line.getBytes("ISO-8859-1"), "UTF-8");
                                 if (matchLogLine(lm, lineStr)) {
                                     JSONObject match = new JSONObject();
@@ -241,6 +243,7 @@ public class ScheduledTask {
                             long readPos = raf.getFilePointer();
                             raf.close();
                             _positions.put(fileKey, readPos);
+                            logger.info("日志文件[{}]: 读取{}行, regex={}", lm.getLogFilePath(), lineCount, lm.getRegexPattern());
                         }
                     } catch (Exception e) {
                         logger.error("读取日志文件失败: {}", lm.getLogFilePath(), e);
@@ -270,7 +273,7 @@ public class ScheduledTask {
             return false;
         }
         try {
-            return Pattern.compile(lm.getRegexPattern()).matcher(line).find();
+            return Pattern.compile(lm.getRegexPattern().trim()).matcher(line).find();
         } catch (Exception e) {
             logger.warn("正则表达式错误：{}", lm.getRegexPattern());
             return false;
@@ -328,6 +331,7 @@ public class ScheduledTask {
             String resultJson = restUtil.post(commonConfig.getServerUrl() + "/lins/logMonitor/agentList", paramsJson);
             if (resultJson != null) {
                 JSONArray resultArray = JSONUtil.parseArray(resultJson);
+                logger.info("获取日志规则: hostname={}, count={}", commonConfig.getBindIp(), resultArray.size());
                 logMonitorList.clear();
                 if (resultArray.size() > 0) {
                     logMonitorList = JSONUtil.toList(resultArray, LogMonitor.class);
