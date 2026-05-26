@@ -57,7 +57,7 @@ public class HeathMonitorController {
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询服务心跳监控错误", e);
-            logInfoService.save("查询心跳监控错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询心跳监控错误", StaticKeys.LOG_ERROR);
 
         }
         return "heath/list";
@@ -83,7 +83,7 @@ public class HeathMonitorController {
 
         } catch (Exception e) {
             logger.error("保存服务心跳监控错误：", e);
-            logInfoService.save(HeathMonitor.getAppName(), "保存心跳监控错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存心跳监控错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/heathMonitor/list";
     }
@@ -112,7 +112,7 @@ public class HeathMonitorController {
             model.addAttribute("heathMonitor", heathMonitor);
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(heathMonitor.getAppName(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "heath/add";
     }
@@ -136,7 +136,7 @@ public class HeathMonitorController {
             model.addAttribute("heathMonitor", heathMonitor);
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(heathMonitor.getAppName(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "heath/view";
     }
@@ -158,12 +158,12 @@ public class HeathMonitorController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 HeathMonitor = heathMonitorService.selectById(request.getParameter("id"));
-                logInfoService.save("删除服务心跳监控：" + HeathMonitor.getAppName(), "删除服务心跳监控：" + HeathMonitor.getAppName() + "：" + HeathMonitor.getHeathUrl(), StaticKeys.LOG_OPERATION);
+                logInfoService.save("", "删除服务心跳监控：" + HeathMonitor.getAppName(), StaticKeys.LOG_OPERATION);
                 heathMonitorService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/heathMonitor/list";

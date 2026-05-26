@@ -108,7 +108,7 @@ public class ContainerInfoController {
             }
         } catch (Exception e) {
             logger.error("查询容器信息错误", e);
-            logInfoService.save("查询容器信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询容器信息错误", StaticKeys.LOG_ERROR);
         }
         return "container/list";
     }
@@ -126,7 +126,7 @@ public class ContainerInfoController {
             }
         } catch (Exception e) {
             logger.error("保存容器错误：", e);
-            logInfoService.save(containerInfo.getHostname(), "保存容器错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存容器错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/containerInfo/list";
     }
@@ -158,11 +158,11 @@ public class ContainerInfoController {
                     containerName = StringUtils.defaultString(delContainer.getContainerName());
                 }
                 containerInfoService.deleteById(id.split(","));
-                logInfoService.save(hostname, "删除容器：" + hostname + "：" + containerName, StaticKeys.LOG_OPERATION);
+                logInfoService.save("", "删除容器：" + hostname + "：" + containerName, StaticKeys.LOG_OPERATION);
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save("删除容器错误", errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "删除容器错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/containerInfo/list";
     }

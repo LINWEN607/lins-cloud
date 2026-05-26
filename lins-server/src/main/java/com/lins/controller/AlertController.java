@@ -77,7 +77,7 @@ public class AlertController {
             model.addAttribute("logMatchWarnMail", WarnMailUtil.runtimeConfig.getOrDefault("logMatchWarnMail", mailConfig.getLogMatchWarnMail()));
         } catch (Exception e) {
             logger.error("查询告警设置错误", e);
-            logInfoService.save("查询告警设置错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询告警设置错误", StaticKeys.LOG_ERROR);
         }
         String tab = request.getParameter("tab");
         if (StringUtils.isEmpty(tab)) {
@@ -154,7 +154,7 @@ public class AlertController {
             }
         } catch (Exception e) {
             logger.error("保存告警设置错误", e);
-            logInfoService.save("保存告警设置错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存告警设置错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/alert/list?msg=save&tab=" + type;
     }
@@ -198,7 +198,7 @@ public class AlertController {
             }
         } catch (Exception e) {
             logger.error("测试告警设置错误", e);
-            logInfoService.save("测试告警设置错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "测试告警设置错误", StaticKeys.LOG_ERROR);
             result = "error";
         }
         return "redirect:/alert/list?msg=test&result=" + result + "&tab=" + type;
@@ -219,7 +219,7 @@ public class AlertController {
             saveConfigVal("logMatchWarnMail", request.getParameter("logMatchWarnMail"));
         } catch (Exception e) {
             logger.error("保存告警配置错误", e);
-            logInfoService.save("保存告警配置错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存告警配置错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/alert/list?msg=save&tab=config";
     }

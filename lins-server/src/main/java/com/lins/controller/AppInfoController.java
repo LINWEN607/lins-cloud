@@ -95,7 +95,7 @@ public class AppInfoController {
             return JSONUtil.toJsonStr(appInfoList);
         } catch (Exception e) {
             logger.error("agent获取进程信息错误", e);
-            logInfoService.save("agent获取进程信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "agent获取进程信息错误", StaticKeys.LOG_ERROR);
 
         }
         return "";
@@ -147,7 +147,7 @@ public class AppInfoController {
             model.addAttribute("appInfo", appInfo);
         } catch (Exception e) {
             logger.error("查询进程信息错误", e);
-            logInfoService.save("查询进程信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询进程信息错误", StaticKeys.LOG_ERROR);
 
         }
         return "app/list";
@@ -172,7 +172,7 @@ public class AppInfoController {
             }
         } catch (Exception e) {
             logger.error("保存进程错误：", e);
-            logInfoService.save(AppInfo.getHostname(), "保存进程错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存进程错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/appInfo/list";
     }
@@ -200,7 +200,7 @@ public class AppInfoController {
             model.addAttribute("appInfo", appInfo);
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(appInfo.getAppPid(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "app/add";
     }
@@ -234,7 +234,7 @@ public class AppInfoController {
             model.addAttribute("appStateList", JSONUtil.parseArray(appStateList));
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(appInfo.getHostname() + ":" + appInfo.getAppPid(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "app/view";
     }
@@ -256,7 +256,7 @@ public class AppInfoController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 appInfo = appInfoService.selectById(request.getParameter("id"));
-                logInfoService.save("删除进程：" + appInfo.getHostname(), "删除进程：" + appInfo.getHostname() + "：" + appInfo.getAppPid(), StaticKeys.LOG_OPERATION);
+                logInfoService.save("", "删除进程：" + appInfo.getHostname(), StaticKeys.LOG_OPERATION);
                 appInfoService.deleteById(request.getParameter("id").split(","));
             }
         } catch (Exception e) {

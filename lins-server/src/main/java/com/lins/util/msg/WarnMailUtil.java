@@ -105,7 +105,7 @@ public class WarnMailUtil {
                 logInfoService.save(memState.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送内存告警失败：", e);
-                logInfoService.save("发送内存告警错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送内存告警错误", StaticKeys.LOG_ERROR);
             }
         }
 
@@ -136,7 +136,7 @@ public class WarnMailUtil {
                 logInfoService.save(cpuState.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送CPU告警失败：", e);
-                logInfoService.save("发送CPU告警错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送CPU告警错误", StaticKeys.LOG_ERROR);
             }
         }
 
@@ -168,7 +168,7 @@ public class WarnMailUtil {
                 logInfoService.save(heathMonitor.getAppName(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送服务健康检测告警失败：", e);
-                logInfoService.save("发送服务健康检测告警错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送服务健康检测告警错误", StaticKeys.LOG_ERROR);
             }
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
@@ -179,7 +179,7 @@ public class WarnMailUtil {
                 logInfoService.save(heathMonitor.getAppName(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送服务接口恢复正常通知失败：", e);
-                logInfoService.save("发送服务接口恢复正常通知错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送服务接口恢复正常通知错误", StaticKeys.LOG_ERROR);
             }
         }
         return false;
@@ -209,7 +209,7 @@ public class WarnMailUtil {
             } else {
                 WarnPools.MEM_WARN_MAP.remove(key);
             }
-            logInfoService.save(systemInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(systemInfo.getRemark(), commContent, StaticKeys.LOG_ERROR);
         } else {
             WarnPools.MEM_WARN_MAP.remove(key);
             try {
@@ -217,10 +217,10 @@ public class WarnMailUtil {
                 String commContent = "主机已经恢复上线：" + systemInfo.getHostname() + "，备注：" + systemInfo.getRemark()
                         + "。";
                 sendToAllChannels(title, commContent);
-                logInfoService.save(systemInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
+            logInfoService.save(systemInfo.getRemark(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送主机恢复上线通知失败：", e);
-                logInfoService.save("发送主机恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送主机恢复上线通知错误", StaticKeys.LOG_ERROR);
             }
         }
         return false;
@@ -260,7 +260,7 @@ public class WarnMailUtil {
                 logInfoService.save(appInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送进程恢复上线通知失败：", e);
-                logInfoService.save("发送进程恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送进程恢复上线通知错误", StaticKeys.LOG_ERROR);
             }
         }
         return false;
@@ -299,7 +299,7 @@ public class WarnMailUtil {
                 logInfoService.save(containerInfo.getHostname(), commContent, StaticKeys.LOG_ERROR);
             } catch (Exception e) {
                 logger.error("发送容器恢复上线通知失败：", e);
-                logInfoService.save("发送容器恢复上线通知错误", e.toString(), StaticKeys.LOG_ERROR);
+                logInfoService.save("", "发送容器恢复上线通知错误", StaticKeys.LOG_ERROR);
             }
         }
         return false;
@@ -322,7 +322,7 @@ public class WarnMailUtil {
             logInfoService.save(hostname, commContent, StaticKeys.LOG_ERROR);
         } catch (Exception e) {
             logger.error("发送日志匹配告警失败：", e);
-            logInfoService.save("发送日志匹配告警错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "发送日志匹配告警错误", StaticKeys.LOG_ERROR);
         }
     }
 
@@ -345,7 +345,7 @@ public class WarnMailUtil {
             return "success";
         } catch (Exception e) {
             logger.error("发送邮件错误：", e);
-            logInfoService.save("发送邮件错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "发送邮件错误", StaticKeys.LOG_ERROR);
             return "error";
         }
     }

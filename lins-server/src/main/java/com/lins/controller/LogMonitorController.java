@@ -68,7 +68,7 @@ public class LogMonitorController {
             return JSONUtil.toJsonStr(list);
         } catch (Exception e) {
             logger.error("agent获取日志监控配置错误", e);
-            logInfoService.save("agent获取日志监控配置错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "agent获取日志监控配置错误", StaticKeys.LOG_ERROR);
         }
         return "";
     }
@@ -112,7 +112,7 @@ public class LogMonitorController {
             model.addAttribute("logMonitor", logMonitor);
         } catch (Exception e) {
             logger.error("查询日志监控错误", e);
-            logInfoService.save("查询日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询日志监控错误", StaticKeys.LOG_ERROR);
         }
         return "log/monitor/list";
     }
@@ -127,7 +127,7 @@ public class LogMonitorController {
             }
         } catch (Exception e) {
             logger.error("保存日志监控错误", e);
-            logInfoService.save(logMonitor.getHostname(), "保存日志监控错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存日志监控错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/logMonitor/list";
     }
@@ -145,7 +145,7 @@ public class LogMonitorController {
             model.addAttribute("logMonitor", logMonitor);
         } catch (Exception e) {
             logger.error("编辑日志监控错误", e);
-            logInfoService.save("编辑日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "编辑日志监控错误", StaticKeys.LOG_ERROR);
         }
         return "log/monitor/add";
     }
@@ -158,7 +158,7 @@ public class LogMonitorController {
             }
         } catch (Exception e) {
             logger.error("删除日志监控错误", e);
-            logInfoService.save("删除日志监控错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "删除日志监控错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/logMonitor/list";
     }
@@ -180,7 +180,7 @@ public class LogMonitorController {
             }
         } catch (Exception e) {
             logger.error("切换日志监控状态错误", e);
-            logInfoService.save("切换日志监控状态错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "切换日志监控状态错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/logMonitor/list";
     }

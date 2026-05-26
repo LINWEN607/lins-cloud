@@ -55,7 +55,7 @@ public class SettingsController {
             return "redirect:/settings/pwd?msg=success";
         } catch (Exception e) {
             logger.error("修改密码错误", e);
-            logInfoService.save("修改密码错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "修改密码错误", StaticKeys.LOG_ERROR);
             return "redirect:/settings/pwd?msg=error";
         }
     }

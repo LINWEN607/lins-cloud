@@ -63,7 +63,7 @@ public class DbTableCountController {
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询数据源表统计信息错误", e);
-            logInfoService.save("查询数据源表统计信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询数据源表统计信息错误", StaticKeys.LOG_ERROR);
 
         }
         return "dbTableCount/list";
@@ -84,7 +84,7 @@ public class DbTableCountController {
             dbTableCountService.save(DbTableCount);
         } catch (Exception e) {
             logger.error("保存数据源表统计错误：", e);
-            logInfoService.save("保存数据源表统计错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存数据源表统计错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/dbTableCount/list";
     }
@@ -110,7 +110,7 @@ public class DbTableCountController {
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/dbTableCount/list";

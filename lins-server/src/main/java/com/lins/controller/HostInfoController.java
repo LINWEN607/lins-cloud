@@ -67,7 +67,7 @@ public class HostInfoController {
 
         } catch (Exception e) {
             logger.error("保存主机备注信息错误：", e);
-            logInfoService.save(SystemInfo.getHostname(), "保存主机备注信息错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存主机备注信息错误", StaticKeys.LOG_ERROR);
         }
         return "success";
     }

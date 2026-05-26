@@ -379,7 +379,7 @@ public class ScheduledTask {
             }
         } catch (Exception e) {
             logger.error("服务接口检测任务错误", e);
-            logInfoService.save("服务接口检测错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "服务接口检测错误", StaticKeys.LOG_ERROR);
         }
     }
 
@@ -428,7 +428,7 @@ public class ScheduledTask {
             }
         } catch (Exception e) {
             logger.error("数据表监控任务错误", e);
-            logInfoService.save("数据表监控任务错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "数据表监控任务错误", StaticKeys.LOG_ERROR);
         }
     }
 
@@ -576,7 +576,7 @@ public class ScheduledTask {
         } catch (Exception e) {
             // TODO Auto-generated catch block
             logger.error("批量提交监控数据错误----------", e);
-            logInfoService.save("commitTask", "批量提交监控数据错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "批量提交监控数据错误", StaticKeys.LOG_ERROR);
         }
         logger.info("批量提交监控数据任务结束----------" + DateUtil.getCurrentDateTime());
     }
@@ -636,13 +636,13 @@ public class ScheduledTask {
                 //删除7天前数据库表统计信息
                 dbTableCountService.deleteByDate(paramsDel);
 
-                logInfoService.save("定时清空历史数据完成", "", null);
+                logInfoService.save("", "定时清空历史数据完成", null);
             }
             //执行删除操作end
 
         } catch (Exception e) {
             logger.error("定时清空历史数据任务出错：", e);
-            logInfoService.save("定时清空历史数据错误", "", StaticKeys.LOG_ERROR);
+            logInfoService.save("", "定时清空历史数据错误", StaticKeys.LOG_ERROR);
         }
         logger.info("定时清空历史数据任务结束----------" + DateUtil.getCurrentDateTime());
     }

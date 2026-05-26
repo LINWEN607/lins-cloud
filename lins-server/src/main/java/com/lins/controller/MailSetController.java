@@ -57,7 +57,7 @@ public class MailSetController {
             }
         } catch (Exception e) {
             logger.error("查询邮件设置错误", e);
-            logInfoService.save("查询邮件设置错误：", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询邮件设置错误", StaticKeys.LOG_ERROR);
 
         }
         String msg = request.getParameter("msg");
@@ -100,7 +100,7 @@ public class MailSetController {
             StaticKeys.mailSet = mailSet;
         } catch (Exception e) {
             logger.error("保存邮件设置信息错误：", e);
-            logInfoService.save("邮件设置信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "邮件设置信息错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/mailset/list?msg=save";
     }
@@ -118,7 +118,7 @@ public class MailSetController {
             result = WarnMailUtil.sendMail(mailSet.getToMail(), "WGCLOUD测试邮件发送", "WGCLOUD测试邮件发送");
         } catch (Exception e) {
             logger.error("测试邮件设置信息错误：", e);
-            logInfoService.save("测试邮件设置信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "测试邮件设置信息错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/mailset/list?msg=test&result=" + result;
     }
@@ -142,7 +142,7 @@ public class MailSetController {
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
 
         return "redirect:/mailset/list?msg=save";

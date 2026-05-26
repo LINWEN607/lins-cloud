@@ -72,7 +72,7 @@ public class DbInfoController {
             }
         } catch (Exception e) {
             logger.error("测试数据源信息错误", e);
-            logInfoService.save("测试数据源信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "测试数据源信息错误", StaticKeys.LOG_ERROR);
 
         }
         return JSONUtil.toJsonStr(messageDto);
@@ -96,7 +96,7 @@ public class DbInfoController {
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询数据源信息错误", e);
-            logInfoService.save("查询数据源信息错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询数据源信息错误", StaticKeys.LOG_ERROR);
 
         }
         return "mysql/dblist";
@@ -124,7 +124,7 @@ public class DbInfoController {
             model.addAttribute("dbInfo", dbInfo);
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(dbInfo.getDbName(), errorMsg + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "mysql/init";
     }
@@ -148,7 +148,7 @@ public class DbInfoController {
             }
         } catch (Exception e) {
             logger.error("保存数据源错误：", e);
-            logInfoService.save("保存数据源错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "保存数据源错误", StaticKeys.LOG_ERROR);
         }
         return "redirect:/dbInfo/list?msg=save";
     }
@@ -170,14 +170,13 @@ public class DbInfoController {
         try {
             if (!StringUtils.isEmpty(request.getParameter("id"))) {
                 DbInfo = dbInfoService.selectById(request.getParameter("id"));
-                logInfoService.save("删除数据源：" + DbInfo.getAliasName(), "删除数据源：" + DbInfo.getIp() + "：" + DbInfo.getPort() +
-                        "，数据库别名" + DbInfo.getAliasName(), StaticKeys.LOG_OPERATION);
+                logInfoService.save("", "删除数据源：" + DbInfo.getAliasName(), StaticKeys.LOG_OPERATION);
                 dbInfoService.deleteById(request.getParameter("id").split(","));
                 dbTableService.deleteByDbInfoId(DbInfo.getId());
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "redirect:/dbInfo/list?msg=del";
     }

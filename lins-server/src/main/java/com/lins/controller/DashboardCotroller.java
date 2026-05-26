@@ -225,7 +225,7 @@ public class DashboardCotroller {
 
         } catch (Exception e) {
             logger.error("主面板信息异常：", e);
-            logInfoService.save("dash/main", "主面板信息错误：" + e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "主面板信息错误：" + e.toString(), StaticKeys.LOG_ERROR);
         }
         return "index";
     }
@@ -271,7 +271,7 @@ public class DashboardCotroller {
             model.addAttribute("page", pageInfo);
         } catch (Exception e) {
             logger.error("查询服务器列表错误：", e);
-            logInfoService.save("查询服务器列表错误", e.toString(), StaticKeys.LOG_ERROR);
+            logInfoService.save("", "查询服务器列表错误", StaticKeys.LOG_ERROR);
         }
         return "host/list";
     }
@@ -302,7 +302,7 @@ public class DashboardCotroller {
             model.addAttribute("deskStateList", deskStateList);
         } catch (Exception e) {
             logger.error("服务器详细信息错误：", e);
-            logInfoService.save(hostname, "查看服务器详细信息错误", e.toString());
+            logInfoService.save("", "查看服务器详细信息错误", StaticKeys.LOG_ERROR);
         }
         return "host/view";
     }
@@ -327,13 +327,13 @@ public class DashboardCotroller {
                     if (!StringUtils.isEmpty(sys.getHostname())) {
                         hostInfoService.deleteByIp(sys.getHostname().split(","));
                     }
-                    logInfoService.save("删除主机：" + sys.getHostname(), sys.getHostname(), StaticKeys.LOG_OPERATION);
+                    logInfoService.save("", "删除主机：" + sys.getHostname(), StaticKeys.LOG_OPERATION);
                 }
                 systemInfoService.deleteById(ids);
             }
         } catch (Exception e) {
             logger.error(errorMsg, e);
-            logInfoService.save(errorMsg, "", StaticKeys.LOG_ERROR);
+            logInfoService.save("", errorMsg, StaticKeys.LOG_ERROR);
         }
         return "redirect:/dash/systemInfoList";
     }
@@ -383,7 +383,7 @@ public class DashboardCotroller {
 
         } catch (Exception e) {
             logger.error("服务器图形报表错误：", e);
-            logInfoService.save(hostname, "图形报表错误", e.toString());
+            logInfoService.save("", "图形报表错误", StaticKeys.LOG_ERROR);
         }
         return "host/viewChart";
     }
