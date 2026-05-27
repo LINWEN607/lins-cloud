@@ -5,28 +5,23 @@ on:
     branches:
       - main
 
+permissions:
+  packages: write
+
 jobs:
   delete:
     runs-on: ubuntu-latest
     steps:
       - name: Delete old lins-server versions
-        env:
-          TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          versions=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "https://api.github.com/user/packages/container/lins-server/versions" | jq -r '.[].id' | tail -n +6)
+          versions=$(gh api /repos/${{ github.repository }}/packages/container/lins-server/versions --jq '.[].id' | tail -n +6)
           for v in $versions; do
-            curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-              "https://api.github.com/user/packages/container/lins-server/versions/$v"
+            gh api -X DELETE "/repos/${{ github.repository }}/packages/container/lins-server/versions/$v"
           done
 
       - name: Delete old lins-agent versions
-        env:
-          TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          versions=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "https://api.github.com/user/packages/container/lins-agent/versions" | jq -r '.[].id' | tail -n +6)
+          versions=$(gh api /repos/${{ github.repository }}/packages/container/lins-agent/versions --jq '.[].id' | tail -n +6)
           for v in $versions; do
-            curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-              "https://api.github.com/user/packages/container/lins-agent/versions/$v"
+            gh api -X DELETE "/repos/${{ github.repository }}/packages/container/lins-agent/versions/$v"
           done
