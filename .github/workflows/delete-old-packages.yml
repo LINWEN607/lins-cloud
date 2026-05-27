@@ -8,11 +8,11 @@ on:
 jobs:
   delete:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
     steps:
-      - name: Auth check
-        run: gh auth status
+      - name: Login with PAT
+        run: |
+          echo "${{ secrets.GHCR_TOKEN }}" | gh auth login --with-token
+          gh auth status
 
       - name: Delete old lins-server versions
         run: |
