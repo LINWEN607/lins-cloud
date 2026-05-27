@@ -11,12 +11,16 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
     steps:
+      - name: Auth check
+        run: gh auth status
+
       - name: Delete old lins-server versions
         run: |
           versions=$(gh api /user/packages/container/lins-server/versions --jq '.[].id' | tail -n +6)
           for v in $versions; do
             gh api -X DELETE "/user/packages/container/lins-server/versions/$v"
           done
+
       - name: Delete old lins-agent versions
         run: |
           versions=$(gh api /user/packages/container/lins-agent/versions --jq '.[].id' | tail -n +6)
