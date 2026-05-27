@@ -38,6 +38,7 @@
                 <th>主机(备注)</th>
                 <th>日志文件路径</th>
                 <th>正则表达式</th>
+                <th>备注</th>
                 <th>启用告警</th>
                 <th>状态</th>
                 <th>创建时间</th>
@@ -50,6 +51,7 @@
                 <td th:text="${item.hostname} + ' (' + ${hostRemarkMap[item.hostname]} + ')'"></td>
                 <td th:text="${item.logFilePath}"></td>
                 <td th:text="${item.regexPattern}"></td>
+                <td th:text="${item.remark}"></td>
                 <td th:text="${item.enableAlert == 1 ? '是' : '否'}"></td>
                 <td th:text="${item.state == '1' ? '启用' : '停用'}"></td>
                 <td th:text="${#dates.format(item.createTime, 'yyyy-MM-dd HH:mm')}"></td>
@@ -60,7 +62,7 @@
                 </td>
               </tr>
               <tr th:if="${#lists.isEmpty(page.list)}">
-                <td colspan="8" style="text-align:center;">暂无数据</td>
+                <td colspan="9" style="text-align:center;">暂无数据</td>
               </tr>
               </tbody>
             </table>

@@ -80,7 +80,17 @@
                   <span   th:text="${item.appName}"></span>
                 </th:block>
               </td>
-              <td th:text="${item.memPer}">Update software</td>
+              <td>
+                  <th:block th:if="${item.memPer >= 90}">
+                      <span class="badge bg-danger" th:text="${item.memPer}"></span>
+                  </th:block>
+                  <th:block th:if="${item.memPer < 90 && item.memPer >= 70}">
+                      <span class="badge bg-warning" th:text="${item.memPer}"></span>
+                  </th:block>
+                  <th:block th:if="${item.memPer < 70}">
+                      <span class="badge bg-primary" th:text="${item.memPer}"></span>
+                  </th:block>
+              </td>
               <td>
                   <th:block th:if="${item.cpuPer >= 90}">
                       <span class="badge bg-danger" th:text="${item.cpuPer}"></span>
