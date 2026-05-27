@@ -1,0 +1,23 @@
+name: Delete Old Packages
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  packages: write
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'lins-server'
+          package-type: 'container'
+          min-versions-to-keep: 5
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'lins-agent'
+          package-type: 'container'
+          min-versions-to-keep: 5
