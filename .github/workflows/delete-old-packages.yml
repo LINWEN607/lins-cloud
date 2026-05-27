@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete old lins-server versions
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           versions=$(gh api /repos/${{ github.repository }}/packages/container/lins-server/versions --jq '.[].id' | tail -n +6)
           for v in $versions; do
@@ -20,6 +22,8 @@ jobs:
           done
 
       - name: Delete old lins-agent versions
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           versions=$(gh api /repos/${{ github.repository }}/packages/container/lins-agent/versions --jq '.[].id' | tail -n +6)
           for v in $versions; do
