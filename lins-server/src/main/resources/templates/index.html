@@ -244,7 +244,7 @@
   });
   const interval = chart.intervalStack()
           .position('percent')
-          .color('item')
+          .color('item', ['#e85d75', '#f0883e', '#e85d75', '#e85d75', '#3fb5a0'])
           .label('count', {
             formatter: (val, item) => {
             return item.point.item + ': ' + val;
