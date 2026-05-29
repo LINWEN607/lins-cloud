@@ -124,12 +124,12 @@ jobs:
 
             case "$service" in
               lins-server)
-                HOST=${{ secrets.HOST_LINS-SERVER_MAIN }}
-                PASS=${{ secrets.PASS_LINS-SERVER_MAIN }}
+                HOST=${{ secrets.SSH_HOST_SERVER_MAIN }}
+                PASS=${{ secrets.SSH_PASS_SERVER_MAIN }}
                 ;;
               lins-agent)
-                HOST=${{ secrets.HOST_LINS-AGENT_MAIN }}
-                PASS=${{ secrets.PASS_LINS-AGENT_MAIN }}
+                HOST=${{ secrets.SSH_HOST_AGENT_MAIN }}
+                PASS=${{ secrets.SSH_PASS_AGENT_MAIN }}
                 ;;
             esac
 
