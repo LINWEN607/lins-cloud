@@ -23,7 +23,12 @@ jobs:
       BUILD_AGENT: ${{ steps.changes.outputs.build_agent }}
       DEPLOY_SERVER: ${{ steps.changes.outputs.deploy_server }}
       DEPLOY_AGENT: ${{ steps.changes.outputs.deploy_agent }}
+      START_TIME: ${{ steps.timer.outputs.START_TIME }}
     steps:
+      - name: 记录开始时间
+        id: timer
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: 拉取代码
         run: |
           git clone --depth 2 "${{ gitea.server_url }}/${{ gitea.repository }}.git" .
@@ -181,9 +186,11 @@ jobs:
               export SSHPASS="$SERVER_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$SERVER_HOST" "
                 cd /data/linscloud/lins-server &&
-                OLD_TAG=\$(grep 'image: $IMAGE_SERVER:' docker-compose.yml | sed 's|.*$IMAGE_SERVER:||') &&
+                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
+                if [ -z \"\$COMPOSE_FILE\" ]; then echo 'compose 文件不存在'; exit 1; fi &&
+                OLD_TAG=\$(grep 'image: $IMAGE_SERVER:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE_SERVER:||') &&
                 echo \"旧版本: \$OLD_TAG, 新版本: $SLUG-$SHORT_SHA\" &&
-                sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:$SLUG-$SHORT_SHA|\" docker-compose.yml &&
+                sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:$SLUG-$SHORT_SHA|\" \"\$COMPOSE_FILE\" &&
                 echo '$TOKEN' | docker login ghcr.io -u $GHCR_USERNAME --password-stdin &&
                 docker compose pull &&
                 docker compose down &&
@@ -201,7 +208,7 @@ jobs:
                   echo 'SERVER_DEPLOY_OK'
                 else
                   echo '=== 启动失败，回退 ===' &&
-                  sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:\$OLD_TAG|\" docker-compose.yml &&
+                  sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:\$OLD_TAG|\" \"\$COMPOSE_FILE\" &&
                   docker compose down &&
                   docker compose up -d &&
                   curl -s -H \"Authorization: Bearer $TOKEN\" \
@@ -219,8 +226,8 @@ jobs:
               export SSHPASS="$SERVER_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$SERVER_HOST" "
                 cd /data/linscloud/lins-server &&
-                docker compose down &&
-                docker compose up -d
+                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
+                [ -n \"\$COMPOSE_FILE\" ] && docker compose -f \"\$COMPOSE_FILE\" down && docker compose -f \"\$COMPOSE_FILE\" up -d || echo '无 compose 文件'
               "
             fi
           fi
@@ -232,9 +239,11 @@ jobs:
               export SSHPASS="$AGENT_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$AGENT_HOST" "
                 cd /data/linscloud/lins-agent &&
-                OLD_TAG=\$(grep 'image: $IMAGE_AGENT:' docker-compose.yml | sed 's|.*$IMAGE_AGENT:||') &&
+                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
+                if [ -z \"\$COMPOSE_FILE\" ]; then echo 'compose 文件不存在'; exit 1; fi &&
+                OLD_TAG=\$(grep 'image: $IMAGE_AGENT:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE_AGENT:||') &&
                 echo \"旧版本: \$OLD_TAG, 新版本: $SLUG-$SHORT_SHA\" &&
-                sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:$SLUG-$SHORT_SHA|\" docker-compose.yml &&
+                sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:$SLUG-$SHORT_SHA|\" \"\$COMPOSE_FILE\" &&
                 echo '$TOKEN' | docker login ghcr.io -u $GHCR_USERNAME --password-stdin &&
                 docker compose pull &&
                 docker compose down &&
@@ -252,7 +261,7 @@ jobs:
                   echo 'AGENT_DEPLOY_OK'
                 else
                   echo '=== 启动失败，回退 ===' &&
-                  sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:\$OLD_TAG|\" docker-compose.yml &&
+                  sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:\$OLD_TAG|\" \"\$COMPOSE_FILE\" &&
                   docker compose down &&
                   docker compose up -d &&
                   curl -s -H \"Authorization: Bearer $TOKEN\" \
@@ -270,8 +279,8 @@ jobs:
               export SSHPASS="$AGENT_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$AGENT_HOST" "
                 cd /data/linscloud/lins-agent &&
-                docker compose down &&
-                docker compose up -d
+                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
+                [ -n \"\$COMPOSE_FILE\" ] && docker compose -f \"\$COMPOSE_FILE\" down && docker compose -f \"\$COMPOSE_FILE\" up -d || echo '无 compose 文件'
               "
             fi
           fi
@@ -317,6 +326,7 @@ jobs:
         run: |
           SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
           SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
+          START_TIME=${{ needs.build.outputs.START_TIME }}
           DURATION=$(( $(date +%s) - START_TIME ))
           MIN=$(( DURATION / 60 ))
           SEC=$(( DURATION % 60 ))
@@ -327,7 +337,7 @@ jobs:
           SERVICES=$(echo "$SERVICES" | xargs)
 
           TIMESTAMP=$(date +%s%3N)
-          SIGN=$(echo -n "$TIMESTAMP\n$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
+          SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
           WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
 
           if [ "${{ job.status }}" = "success" ]; then
