@@ -1,0 +1,176 @@
+name: 构建和部署
+
+on:
+  push:
+    branches: [main]
+    paths: ['lins-server/**', 'lins-agent/**']
+
+env:
+  IMAGE_SERVER: ghcr.io/linwen607/lins-server
+  IMAGE_AGENT: ghcr.io/linwen607/lins-agent
+  GHCR_USERNAME: LINWEN607
+
+jobs:
+  build-deploy:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: sh
+    steps:
+      - name: 拉取代码
+        run: |
+          git clone --depth 1 "${{ gitea.server_url }}/${{ gitea.repository }}.git" .
+
+      - name: 检测变更项目
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only ${{ gitea.before }} ${{ gitea.sha }})
+          echo "Changed: $CHANGED"
+          echo "$CHANGED" | grep -q "^lins-server/" && \
+            echo "$CHANGED" | grep -vq "^lins-server/docker-compose.yml" && \
+            echo "build_server=true" >> $GITHUB_OUTPUT || true
+          echo "$CHANGED" | grep -q "^lins-agent/" && \
+            echo "$CHANGED" | grep -vq "^lins-agent/docker-compose.yml" && \
+            echo "build_agent=true" >> $GITHUB_OUTPUT || true
+          echo "$CHANGED" | grep -q "^lins-server/" && echo "deploy_server=true" >> $GITHUB_OUTPUT || true
+          echo "$CHANGED" | grep -q "^lins-agent/" && echo "deploy_agent=true" >> $GITHUB_OUTPUT || true
+
+      - name: 登录 GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
+
+      # ==================== Server ====================
+      - name: 构建和推送 lins-server
+        if: steps.changes.outputs.build_server == 'true'
+        run: |
+          TAG=$(echo ${{ gitea.sha }} | cut -c1-8)
+          docker build -t $IMAGE_SERVER:$TAG \
+                      -t $IMAGE_SERVER:latest \
+                      -f lins-server/Dockerfile lins-server/
+          docker push $IMAGE_SERVER:$TAG
+          docker push $IMAGE_SERVER:latest
+
+      - name: 部署 lins-server
+        if: steps.changes.outputs.deploy_server == 'true'
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD_SERVER }}
+          TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          TAG=$(echo ${{ gitea.sha }} | cut -c1-8)
+          sshpass -e ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST_SERVER }} "
+            cd /data/linscloud/lins-server &&
+            OLD_TAG=\$(grep 'image: $IMAGE_SERVER:' docker-compose.yml | sed 's|.*$IMAGE_SERVER:||') &&
+            echo \"旧版本: \$OLD_TAG, 新版本: $TAG\" &&
+            sed -i 's|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:$TAG|' docker-compose.yml &&
+            docker compose pull &&
+            docker compose down &&
+            docker compose up -d &&
+            SUCCESS=false &&
+            for i in \$(seq 1 15); do
+              if docker compose ps server --format '{{.State}}' 2>/dev/null | grep -q running; then
+                SUCCESS=true
+                break
+              fi
+              sleep 2
+            done &&
+            if [ \"\$SUCCESS\" = true ]; then
+              docker rmi $IMAGE_SERVER:\$OLD_TAG 2>/dev/null || true
+              echo '=== 部署成功 ==='
+            else
+              echo '=== 启动失败，回退到旧版本 ===' &&
+              sed -i 's|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:\$OLD_TAG|' docker-compose.yml &&
+              docker compose down &&
+              docker compose up -d &&
+              curl -s -H \"Authorization: Bearer $TOKEN\" \
+                \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions\" \
+                | jq -r '.[] | select(.metadata.container.tags[] | contains(\"$TAG\")) | .id' \
+                | while read id; do
+                  curl -s -X DELETE -H \"Authorization: Bearer $TOKEN\" \
+                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions/\$id\"
+                  echo \"=== GHCR 已删除失败版本 $TAG ===\"
+                done &&
+              echo '=== 已回退到 \$OLD_TAG ===' &&
+              exit 1
+            fi
+          "
+
+      # ==================== Agent ====================
+      - name: 构建和推送 lins-agent
+        if: steps.changes.outputs.build_agent == 'true'
+        run: |
+          TAG=$(echo ${{ gitea.sha }} | cut -c1-8)
+          docker build -t $IMAGE_AGENT:$TAG \
+                      -t $IMAGE_AGENT:latest \
+                      -f lins-agent/Dockerfile lins-agent/
+          docker push $IMAGE_AGENT:$TAG
+          docker push $IMAGE_AGENT:latest
+
+      - name: 部署 lins-agent
+        if: steps.changes.outputs.deploy_agent == 'true'
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD_AGENT }}
+          TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          TAG=$(echo ${{ gitea.sha }} | cut -c1-8)
+          sshpass -e ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST_AGENT }} "
+            cd /data/linscloud/lins-agent &&
+            OLD_TAG=\$(grep 'image: $IMAGE_AGENT:' docker-compose.yml | sed 's|.*$IMAGE_AGENT:||') &&
+            echo \"旧版本: \$OLD_TAG, 新版本: $TAG\" &&
+            sed -i 's|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:$TAG|' docker-compose.yml &&
+            docker compose pull &&
+            docker compose down &&
+            docker compose up -d &&
+            SUCCESS=false &&
+            for i in \$(seq 1 15); do
+              if docker compose ps agent --format '{{.State}}' 2>/dev/null | grep -q running; then
+                SUCCESS=true
+                break
+              fi
+              sleep 2
+            done &&
+            if [ \"\$SUCCESS\" = true ]; then
+              docker rmi $IMAGE_AGENT:\$OLD_TAG 2>/dev/null || true
+              echo '=== 部署成功 ==='
+            else
+              echo '=== 启动失败，回退到旧版本 ===' &&
+              sed -i 's|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:\$OLD_TAG|' docker-compose.yml &&
+              docker compose down &&
+              docker compose up -d &&
+              curl -s -H \"Authorization: Bearer $TOKEN\" \
+                \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions\" \
+                | jq -r '.[] | select(.metadata.container.tags[] | contains(\"$TAG\")) | .id' \
+                | while read id; do
+                  curl -s -X DELETE -H \"Authorization: Bearer $TOKEN\" \
+                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions/\$id\"
+                  echo \"=== GHCR 已删除失败版本 $TAG ===\"
+                done &&
+              echo '=== 已回退到 \$OLD_TAG ===' &&
+              exit 1
+            fi
+          "
+
+      # ==================== 清理 ====================
+      - name: 清理旧版 lins-server
+        if: steps.changes.outputs.build_server == 'true'
+        env:
+          TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions" \
+            | jq -r 'sort_by(.created_at) | .[:-5][] | .id' \
+            | while read id; do
+              curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions/$id"
+            done
+
+      - name: 清理旧版 lins-agent
+        if: steps.changes.outputs.build_agent == 'true'
+        env:
+          TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions" \
+            | jq -r 'sort_by(.created_at) | .[:-5][] | .id' \
+            | while read id; do
+              curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions/$id"
+            done
