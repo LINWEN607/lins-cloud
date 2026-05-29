@@ -177,7 +177,7 @@ jobs:
 
           echo "STATUS_MATRIX=$(echo $STATUS | jq -c .)" >> $GITHUB_ENV
           HAS_ROLLBACK=$(echo "$STATUS" | jq '[.[] == "rollback"] | any')
-          [ "$HAS_ROLLBACK" = "true" ] && exit 1
+          if [ "$HAS_ROLLBACK" = "true" ]; then exit 1; fi
 
       - name: 发送钉钉通知
         if: success() || failure()
