@@ -48,7 +48,7 @@ jobs:
           fi
 
           MATRIX='{}'
-          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+          for service in $(echo "$SERVICES" | jq -r '.[]'); do
             ENTRY='{"build":false,"deploy":false}'
             if echo "$CHANGED" | grep -q "^${service}/" && \
                echo "$CHANGED" | grep -vq "^${service}/docker-compose.yml"; then
@@ -73,7 +73,7 @@ jobs:
           SHA=${{ steps.vars.outputs.SHORT_SHA }}
           MATRIX='${{ steps.changes.outputs.BUILD_MATRIX }}'
 
-          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+          for service in $(echo "$SERVICES" | jq -r '.[]'); do
             BUILD=$(echo "$MATRIX" | jq -r ".[\"$service\"].build")
             [ "$BUILD" != "true" ] && continue
 
@@ -118,7 +118,7 @@ jobs:
           MATRIX='${{ needs.build.outputs.BUILD_MATRIX }}'
 
           STATUS='{}'
-          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+          for service in $(echo "$SERVICES" | jq -r '.[]'); do
             DEPLOY=$(echo "$MATRIX" | jq -r ".[\"$service\"].deploy")
             [ "$DEPLOY" != "true" ] && continue
 
@@ -198,7 +198,7 @@ jobs:
           STATUS='${{ env.STATUS_MATRIX }}'
 
           SUCCESS_LIST=""; ROLLBACK_LIST=""; SKIP_LIST=""
-          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+          for service in $(echo "$SERVICES" | jq -r '.[]'); do
             DEPLOY=$(echo "$MATRIX" | jq -r ".[\"$service\"].deploy")
             if [ "$DEPLOY" != "true" ]; then
               SKIP_LIST="${SKIP_LIST} $service"; continue
@@ -239,7 +239,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+          for service in $(echo "$SERVICES" | jq -r '.[]'); do
             curl -s -H "Authorization: Bearer $TOKEN" \
               "https://api.github.com/users/$GHCR_USERNAME/packages/container/$service/versions" \
               > /tmp/versions-$service.json
