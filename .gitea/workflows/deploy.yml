@@ -2,12 +2,12 @@ name: 构建和部署
 
 on:
   push:
-    branches: [main, release, dev]
-    paths: ["lins-server/**", "lins-agent/**"]
+    branches: [main]
+    paths: ['lins-server/**', 'lins-agent/**']
 
 env:
-  IMAGE_SERVER: ghcr.io/linwen607/lins-server
-  IMAGE_AGENT: ghcr.io/linwen607/lins-agent
+  SERVICES: '["lins-server","lins-agent"]'
+  IMAGE_PREFIX: ghcr.io/linwen607
   GHCR_USERNAME: LINWEN607
 
 jobs:
@@ -19,11 +19,7 @@ jobs:
     outputs:
       SHORT_SHA: ${{ steps.vars.outputs.SHORT_SHA }}
       IMAGE_SLUG: ${{ steps.vars.outputs.IMAGE_SLUG }}
-      BUILD_SERVER: ${{ steps.changes.outputs.build_server }}
-      BUILD_AGENT: ${{ steps.changes.outputs.build_agent }}
-      DEPLOY_SERVER: ${{ steps.changes.outputs.deploy_server }}
-      DEPLOY_AGENT: ${{ steps.changes.outputs.deploy_agent }}
-      START_TIME: ${{ steps.timer.outputs.START_TIME }}
+      BUILD_MATRIX: ${{ steps.changes.outputs.BUILD_MATRIX }}
       AUTHOR: ${{ steps.author.outputs.AUTHOR }}
     steps:
       - name: 记录开始时间
@@ -46,15 +42,17 @@ jobs:
           else
             CHANGED=$(git diff --name-only HEAD~1 HEAD)
           fi
-          echo "Changed: $CHANGED"
-          echo "$CHANGED" | grep -q "^lins-server/" && \
-            echo "$CHANGED" | grep -vq "^lins-server/docker-compose.yml" && \
-            echo "build_server=true" >> $GITHUB_OUTPUT || true
-          echo "$CHANGED" | grep -q "^lins-agent/" && \
-            echo "$CHANGED" | grep -vq "^lins-agent/docker-compose.yml" && \
-            echo "build_agent=true" >> $GITHUB_OUTPUT || true
-          echo "$CHANGED" | grep -q "^lins-server/" && echo "deploy_server=true" >> $GITHUB_OUTPUT || true
-          echo "$CHANGED" | grep -q "^lins-agent/" && echo "deploy_agent=true" >> $GITHUB_OUTPUT || true
+
+          MATRIX='{}'
+          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+            ENTRY='{"build":false,"deploy":false}'
+            if echo "$CHANGED" | grep -q "^${service}/" && \
+               echo "$CHANGED" | grep -vq "^${service}/docker-compose.yml"; then
+              ENTRY='{"build":true,"deploy":true}'
+            fi
+            MATRIX=$(echo "$MATRIX" | jq --arg s "$service" --argjson e "$ENTRY" '. + {($s): $e}')
+          done
+          echo "BUILD_MATRIX=$(echo $MATRIX | jq -c .)" >> $GITHUB_OUTPUT
 
       - name: 设置变量
         id: vars
@@ -65,105 +63,42 @@ jobs:
       - name: 登录 GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 
-      # ==================== lins-server 构建 ====================
-      - name: 加载 server 缓存
-        if: steps.changes.outputs.build_server == 'true'
-        run: |
-          mkdir -p /cache/docker-build
-          CACHE_FILE="/cache/docker-build/${{ steps.vars.outputs.IMAGE_SLUG }}-lins-server-buildcache.tar.gz"
-          [ -f "$CACHE_FILE" ] && docker load -i "$CACHE_FILE" || true
-
-      - name: 构建和推送 lins-server
-        if: steps.changes.outputs.build_server == 'true'
+      - name: 构建所有变更服务
         run: |
           SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
           SHA=${{ steps.vars.outputs.SHORT_SHA }}
-          docker build \
-            --cache-from "$IMAGE_SERVER:$SLUG-buildcache" \
-            -t "$IMAGE_SERVER:$SLUG-$SHA" \
-            -t "$IMAGE_SERVER:$SLUG-buildcache" \
-            -f lins-server/Dockerfile lins-server/
-          docker push "$IMAGE_SERVER:$SLUG-$SHA"
+          MATRIX='${{ steps.changes.outputs.BUILD_MATRIX }}'
 
-      - name: 保存 server 缓存
-        if: steps.changes.outputs.build_server == 'true'
-        run: |
-          SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
-          CACHE_FILE="/cache/docker-build/$SLUG-lins-server-buildcache.tar.gz"
-          if [ ! -f "$CACHE_FILE" ]; then
+          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+            BUILD=$(echo "$MATRIX" | jq -r ".[\"$service\"].build")
+            [ "$BUILD" != "true" ] && continue
+
+            IMAGE="${IMAGE_PREFIX}/${service}"
+
+            CACHE_FILE="/cache/docker-build/${SLUG}-${service}-buildcache.tar.gz"
             mkdir -p /cache/docker-build
-            docker save "$IMAGE_SERVER:$SLUG-buildcache" | gzip > "$CACHE_FILE"
-          fi
+            [ -f "$CACHE_FILE" ] && docker load -i "$CACHE_FILE" || true
 
-      # ==================== lins-agent 构建 ====================
-      - name: 加载 agent 缓存
-        if: steps.changes.outputs.build_agent == 'true'
-        run: |
-          mkdir -p /cache/docker-build
-          CACHE_FILE="/cache/docker-build/${{ steps.vars.outputs.IMAGE_SLUG }}-lins-agent-buildcache.tar.gz"
-          [ -f "$CACHE_FILE" ] && docker load -i "$CACHE_FILE" || true
+            docker build \
+              --cache-from "$IMAGE:$SLUG-buildcache" \
+              -t "$IMAGE:$SLUG-$SHA" \
+              -t "$IMAGE:$SLUG-buildcache" \
+              -f "${service}/Dockerfile" "${service}/"
+            docker push "$IMAGE:$SLUG-$SHA"
 
-      - name: 构建和推送 lins-agent
-        if: steps.changes.outputs.build_agent == 'true'
-        run: |
-          SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
-          SHA=${{ steps.vars.outputs.SHORT_SHA }}
-          docker build \
-            --cache-from "$IMAGE_AGENT:$SLUG-buildcache" \
-            -t "$IMAGE_AGENT:$SLUG-$SHA" \
-            -t "$IMAGE_AGENT:$SLUG-buildcache" \
-            -f lins-agent/Dockerfile lins-agent/
-          docker push "$IMAGE_AGENT:$SLUG-$SHA"
+            if [ ! -f "$CACHE_FILE" ]; then
+              docker save "$IMAGE:$SLUG-buildcache" | gzip > "$CACHE_FILE"
+            fi
+          done
 
-      - name: 保存 agent 缓存
-        if: steps.changes.outputs.build_agent == 'true'
-        run: |
-          SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
-          CACHE_FILE="/cache/docker-build/$SLUG-lins-agent-buildcache.tar.gz"
-          if [ ! -f "$CACHE_FILE" ]; then
-            mkdir -p /cache/docker-build
-            docker save "$IMAGE_AGENT:$SLUG-buildcache" | gzip > "$CACHE_FILE"
-          fi
-
-  # ==================== 部署 ====================
   deploy:
     needs: build
-    if: needs.build.outputs.DEPLOY_SERVER == 'true' || needs.build.outputs.DEPLOY_AGENT == 'true'
+    if: needs.build.outputs.BUILD_MATRIX != '{}'
     runs-on: self-hosted
     defaults:
       run:
         shell: sh
     steps:
-      - name: 设置部署目标
-        id: target
-        run: |
-          case "${{ needs.build.outputs.IMAGE_SLUG }}" in
-            main)
-              echo "SERVER_HOST=${{ secrets.SSH_HOST_SERVER_MAIN }}" >> $GITHUB_OUTPUT
-              echo "SERVER_PASS=${{ secrets.SSH_PASS_SERVER_MAIN }}" >> $GITHUB_OUTPUT
-              echo "AGENT_HOST=${{ secrets.SSH_HOST_AGENT_MAIN }}" >> $GITHUB_OUTPUT
-              echo "AGENT_PASS=${{ secrets.SSH_PASS_AGENT_MAIN }}" >> $GITHUB_OUTPUT
-              echo "DING_ACCESS=${{ secrets.DINGTALK_ACCESS_TOKEN_MAIN }}" >> $GITHUB_OUTPUT
-              echo "DING_SECRET=${{ secrets.DINGTALK_SECRET_MAIN }}" >> $GITHUB_OUTPUT
-              ;;
-            release)
-              echo "SERVER_HOST=${{ secrets.SSH_HOST_SERVER_RELEASE }}" >> $GITHUB_OUTPUT
-              echo "SERVER_PASS=${{ secrets.SSH_PASS_SERVER_RELEASE }}" >> $GITHUB_OUTPUT
-              echo "AGENT_HOST=${{ secrets.SSH_HOST_AGENT_RELEASE }}" >> $GITHUB_OUTPUT
-              echo "AGENT_PASS=${{ secrets.SSH_PASS_AGENT_RELEASE }}" >> $GITHUB_OUTPUT
-              echo "DING_ACCESS=${{ secrets.DINGTALK_ACCESS_TOKEN_RELEASE }}" >> $GITHUB_OUTPUT
-              echo "DING_SECRET=${{ secrets.DINGTALK_SECRET_RELEASE }}" >> $GITHUB_OUTPUT
-              ;;
-            dev)
-              echo "SERVER_HOST=${{ secrets.SSH_HOST_SERVER_DEV }}" >> $GITHUB_OUTPUT
-              echo "SERVER_PASS=${{ secrets.SSH_PASS_SERVER_DEV }}" >> $GITHUB_OUTPUT
-              echo "AGENT_HOST=${{ secrets.SSH_HOST_AGENT_DEV }}" >> $GITHUB_OUTPUT
-              echo "AGENT_PASS=${{ secrets.SSH_PASS_AGENT_DEV }}" >> $GITHUB_OUTPUT
-              echo "DING_ACCESS=${{ secrets.DINGTALK_ACCESS_TOKEN_DEV }}" >> $GITHUB_OUTPUT
-              echo "DING_SECRET=${{ secrets.DINGTALK_SECRET_DEV }}" >> $GITHUB_OUTPUT
-              ;;
-          esac
-
       - name: 安装部署工具
         run: |
           sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories 2>/dev/null || true
@@ -176,143 +111,136 @@ jobs:
         run: |
           SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
           SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
-          DEPLOY_SERVER=${{ needs.build.outputs.DEPLOY_SERVER }}
-          DEPLOY_AGENT=${{ needs.build.outputs.DEPLOY_AGENT }}
-          BUILD_SERVER=${{ needs.build.outputs.BUILD_SERVER }}
-          BUILD_AGENT=${{ needs.build.outputs.BUILD_AGENT }}
-          SERVER_HOST=${{ steps.target.outputs.SERVER_HOST }}
-          SERVER_PASS=${{ steps.target.outputs.SERVER_PASS }}
-          AGENT_HOST=${{ steps.target.outputs.AGENT_HOST }}
-          AGENT_PASS=${{ steps.target.outputs.AGENT_PASS }}
+          MATRIX='${{ needs.build.outputs.BUILD_MATRIX }}'
 
-          SERVER_ROLLBACK=false
-          AGENT_ROLLBACK=false
+          STATUS='{}'
+          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+            DEPLOY=$(echo "$MATRIX" | jq -r ".[\"$service\"].deploy")
+            [ "$DEPLOY" != "true" ] && continue
 
-          # ===== lins-server =====
-          if [ "$DEPLOY_SERVER" = "true" ] && [ "$SERVER_HOST" != "" ]; then
-            echo "===== 部署 lins-server 到 $SERVER_HOST ====="
-            if [ "$BUILD_SERVER" = "true" ]; then
-              export SSHPASS="$SERVER_PASS"
-              sshpass -e ssh -o StrictHostKeyChecking=no "root@$SERVER_HOST" "
-                cd /data/linscloud/lins-server &&
-                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
-                if [ -z \"\$COMPOSE_FILE\" ]; then echo 'compose 文件不存在'; exit 1; fi &&
-                OLD_TAG=\$(grep 'image: $IMAGE_SERVER:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE_SERVER:||') &&
-                echo \"旧版本: \$OLD_TAG, 新版本: $SLUG-$SHORT_SHA\" &&
-                sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:$SLUG-$SHORT_SHA|\" \"\$COMPOSE_FILE\" &&
-                echo '$TOKEN' | docker login ghcr.io -u $GHCR_USERNAME --password-stdin &&
-                docker compose pull &&
-                docker compose down &&
-                docker compose up -d &&
-                SUCCESS=false &&
-                for i in \$(seq 1 15); do
-                  if docker compose ps server --format '{{.State}}' 2>/dev/null | grep -q running; then
-                    SUCCESS=true
-                    break
-                  fi
-                  sleep 2
-                done &&
-                if [ \"\$SUCCESS\" = true ]; then
-                  docker rmi $IMAGE_SERVER:\$OLD_TAG 2>/dev/null || true
-                  echo 'SERVER_DEPLOY_OK'
-                else
-                  echo '=== 启动失败，回退 ===' &&
-                  sed -i \"s|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:\$OLD_TAG|\" \"\$COMPOSE_FILE\" &&
-                  docker compose down &&
-                  docker compose up -d &&
-                  curl -s -H \"Authorization: Bearer $TOKEN\" \
-                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions\" \
-                    | jq -r '.[] | select(.metadata.container.tags[] | contains(\"$SLUG-$SHORT_SHA\")) | .id' \
-                    | while read id; do
-                      curl -s -X DELETE -H \"Authorization: Bearer $TOKEN\" \
-                        \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-server/versions/\$id\"
-                    done &&
-                  echo 'SERVER_DEPLOY_FAILED' &&
-                  exit 1
+            case "$service" in
+              lins-server)
+                HOST=${{ secrets.HOST_LINS-SERVER_MAIN }}
+                PASS=${{ secrets.PASS_LINS-SERVER_MAIN }}
+                ;;
+              lins-agent)
+                HOST=${{ secrets.HOST_LINS-AGENT_MAIN }}
+                PASS=${{ secrets.PASS_LINS-AGENT_MAIN }}
+                ;;
+            esac
+
+            IMAGE="${IMAGE_PREFIX}/${service}"
+            SERVICE_STATUS="success"
+            export SSHPASS="$PASS"
+
+            RESULT=$(sshpass -e ssh -o StrictHostKeyChecking=no "root@$HOST" "
+              cd /data/linscloud/${service} &&
+              COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
+              if [ -z \"\$COMPOSE_FILE\" ]; then echo 'COMPOSE_NOT_FOUND'; exit 0; fi &&
+              OLD_TAG=\$(grep 'image: $IMAGE:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE:||') &&
+              sed -i \"s|image: $IMAGE:.*|image: $IMAGE:$SLUG-$SHORT_SHA|\" \"\$COMPOSE_FILE\" &&
+              echo '$TOKEN' | docker login ghcr.io -u $GHCR_USERNAME --password-stdin &&
+              docker compose pull &&
+              docker compose down &&
+              docker compose up -d &&
+              for i in \$(seq 1 15); do
+                if docker compose ps ${service} --format '{{.State}}' 2>/dev/null | grep -q running; then
+                  echo 'DEPLOY_OK'; exit 0
                 fi
-              " || SERVER_ROLLBACK=true
-            else
-              export SSHPASS="$SERVER_PASS"
-              sshpass -e ssh -o StrictHostKeyChecking=no "root@$SERVER_HOST" "
-                cd /data/linscloud/lins-server &&
-                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
-                [ -n \"\$COMPOSE_FILE\" ] && docker compose -f \"\$COMPOSE_FILE\" down && docker compose -f \"\$COMPOSE_FILE\" up -d || echo '无 compose 文件'
-              "
-            fi
-          fi
-
-          # ===== lins-agent =====
-          if [ "$DEPLOY_AGENT" = "true" ] && [ "$AGENT_HOST" != "" ]; then
-            echo "===== 部署 lins-agent 到 $AGENT_HOST ====="
-            if [ "$BUILD_AGENT" = "true" ]; then
-              export SSHPASS="$AGENT_PASS"
-              sshpass -e ssh -o StrictHostKeyChecking=no "root@$AGENT_HOST" "
-                cd /data/linscloud/lins-agent &&
-                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
-                if [ -z \"\$COMPOSE_FILE\" ]; then echo 'compose 文件不存在'; exit 1; fi &&
-                OLD_TAG=\$(grep 'image: $IMAGE_AGENT:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE_AGENT:||') &&
-                echo \"旧版本: \$OLD_TAG, 新版本: $SLUG-$SHORT_SHA\" &&
-                sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:$SLUG-$SHORT_SHA|\" \"\$COMPOSE_FILE\" &&
-                echo '$TOKEN' | docker login ghcr.io -u $GHCR_USERNAME --password-stdin &&
-                docker compose pull &&
-                docker compose down &&
-                docker compose up -d &&
-                SUCCESS=false &&
-                for i in \$(seq 1 15); do
-                  if docker compose ps agent --format '{{.State}}' 2>/dev/null | grep -q running; then
-                    SUCCESS=true
-                    break
-                  fi
-                  sleep 2
+                sleep 2
+              done &&
+              sed -i \"s|image: $IMAGE:.*|image: $IMAGE:\$OLD_TAG|\" \"\$COMPOSE_FILE\" &&
+              docker compose down &&
+              docker compose up -d &&
+              curl -s -H \"Authorization: Bearer $TOKEN\" \
+                \"https://api.github.com/users/$GHCR_USERNAME/packages/container/$service/versions\" \
+                | jq -r '.[] | select(.metadata.container.tags[] | contains(\"$SLUG-$SHORT_SHA\")) | .id' \
+                | while read id; do
+                  curl -s -X DELETE -H \"Authorization: Bearer $TOKEN\" \
+                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/$service/versions/\$id\"
                 done &&
-                if [ \"\$SUCCESS\" = true ]; then
-                  docker rmi $IMAGE_AGENT:\$OLD_TAG 2>/dev/null || true
-                  echo 'AGENT_DEPLOY_OK'
-                else
-                  echo '=== 启动失败，回退 ===' &&
-                  sed -i \"s|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:\$OLD_TAG|\" \"\$COMPOSE_FILE\" &&
-                  docker compose down &&
-                  docker compose up -d &&
-                  curl -s -H \"Authorization: Bearer $TOKEN\" \
-                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions\" \
-                    | jq -r '.[] | select(.metadata.container.tags[] | contains(\"$SLUG-$SHORT_SHA\")) | .id' \
-                    | while read id; do
-                      curl -s -X DELETE -H \"Authorization: Bearer $TOKEN\" \
-                        \"https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions/\$id\"
-                    done &&
-                  echo 'AGENT_DEPLOY_FAILED' &&
-                  exit 1
-                fi
-              " || AGENT_ROLLBACK=true
-            else
-              export SSHPASS="$AGENT_PASS"
-              sshpass -e ssh -o StrictHostKeyChecking=no "root@$AGENT_HOST" "
-                cd /data/linscloud/lins-agent &&
-                COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
-                [ -n \"\$COMPOSE_FILE\" ] && docker compose -f \"\$COMPOSE_FILE\" down && docker compose -f \"\$COMPOSE_FILE\" up -d || echo '无 compose 文件'
-              "
+              echo 'DEPLOY_ROLLBACK'
+            ")
+
+            case "$RESULT" in
+              *DEPLOY_OK*) SERVICE_STATUS="success" ;;
+              *DEPLOY_ROLLBACK*) SERVICE_STATUS="rollback" ;;
+              *COMPOSE_NOT_FOUND*) echo "跳过 ${service}：远程无 compose 文件"; continue ;;
+            esac
+
+            STATUS=$(echo "$STATUS" | jq --arg s "$service" --arg v "$SERVICE_STATUS" '. + {($s): $v}')
+          done
+
+          echo "STATUS_MATRIX=$(echo $STATUS | jq -c .)" >> $GITHUB_ENV
+          HAS_ROLLBACK=$(echo "$STATUS" | jq '[.[] == "rollback"] | any')
+          [ "$HAS_ROLLBACK" = "true" ] && exit 1
+
+      - name: 发送钉钉通知
+        if: success() || failure()
+        env:
+          ACCESS_TOKEN: ${{ secrets.DINGTALK_ACCESS_TOKEN_MAIN }}
+          SECRET: ${{ secrets.DINGTALK_SECRET_MAIN }}
+        run: |
+          ACCESS_TOKEN="${ACCESS_TOKEN##*access_token=}"
+          ACCESS_TOKEN="${ACCESS_TOKEN%%&*}"
+
+          SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
+          AUTHOR=${{ needs.build.outputs.AUTHOR }}
+          DURATION=$(( $(date +%s) - START_TIME ))
+          MIN=$(( DURATION / 60 ))
+          SEC=$(( DURATION % 60 ))
+          MATRIX='${{ needs.build.outputs.BUILD_MATRIX }}'
+          STATUS='${{ env.STATUS_MATRIX }}'
+
+          SUCCESS_LIST=""; ROLLBACK_LIST=""; SKIP_LIST=""
+          for service in $(echo '$SERVICES' | jq -r '.[]'); do
+            DEPLOY=$(echo "$MATRIX" | jq -r ".[\"$service\"].deploy")
+            if [ "$DEPLOY" != "true" ]; then
+              SKIP_LIST="${SKIP_LIST} $service"; continue
             fi
+            ST=$(echo "$STATUS" | jq -r ".[\"$service\"]")
+            case "$ST" in
+              "success") SUCCESS_LIST="${SUCCESS_LIST} $service" ;;
+              "rollback") ROLLBACK_LIST="${ROLLBACK_LIST} $service" ;;
+              *) SKIP_LIST="${SKIP_LIST} $service" ;;
+            esac
+          done
+          SUCCESS_LIST=$(echo "$SUCCESS_LIST" | xargs)
+          ROLLBACK_LIST=$(echo "$ROLLBACK_LIST" | xargs)
+          SKIP_LIST=$(echo "$SKIP_LIST" | xargs)
+
+          TIMESTAMP=$(($(date +%s) * 1000))
+          SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
+          WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
+
+          if [ -z "$ROLLBACK_LIST" ]; then
+            MSG=$(printf '✅ 构建部署成功\n项目：%s\n分支：main\n提交：%s %s\n提交人：%s\n耗时：%d分%d秒\n部署服务：%s' \
+              "${{ gitea.repository }}" "$SHORT_SHA" "${{ gitea.message }}" "$AUTHOR" "$MIN" "$SEC" "$SUCCESS_LIST")
+            [ -n "$SKIP_LIST" ] && MSG="${MSG}\n未部署：${SKIP_LIST}"
+          else
+            MSG=$(printf '❌ 部分服务部署失败\n项目：%s\n分支：main\n提交：%s %s\n提交人：%s' \
+              "${{ gitea.repository }}" "$SHORT_SHA" "${{ gitea.message }}" "$AUTHOR")
+            [ -n "$SUCCESS_LIST" ] && MSG="${MSG}\n部署成功：${SUCCESS_LIST}"
+            [ -n "$ROLLBACK_LIST" ] && MSG="${MSG}\n部署回滚：${ROLLBACK_LIST}（已回滚旧版本，已删除失败镜像）"
+            [ -n "$SKIP_LIST" ] && MSG="${MSG}\n未部署：${SKIP_LIST}"
           fi
 
-          echo "SERVER_ROLLBACK=$SERVER_ROLLBACK" >> $GITHUB_ENV
-          echo "AGENT_ROLLBACK=$AGENT_ROLLBACK" >> $GITHUB_ENV
-          if [ "$SERVER_ROLLBACK" = true ] || [ "$AGENT_ROLLBACK" = true ]; then
-            exit 1
-          fi
+          curl -s -X POST "$WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}')"
 
-      # ==================== 清理 GHCR ====================
-      - name: 清理旧版 GHCR 镜像（每分支保留 5 个）
+      - name: 清理旧版 GHCR 镜像（每服务保留 5 个）
+        if: always()
         env:
           TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
-          for image in lins-server lins-agent; do
+          for service in $(echo '$SERVICES' | jq -r '.[]'); do
             curl -s -H "Authorization: Bearer $TOKEN" \
-              "https://api.github.com/users/$GHCR_USERNAME/packages/container/$image/versions" \
-              > /tmp/versions-$image.json
-            cat /tmp/versions-$image.json | jq -r '
+              "https://api.github.com/users/$GHCR_USERNAME/packages/container/$service/versions" \
+              > /tmp/versions-$service.json
+            cat /tmp/versions-$service.json | jq -r '
               [.[]
-                | select(.metadata.container.tags | any(startswith("'"$SLUG"'-")))
+                | select(.metadata.container.tags | any(startswith("main-")))
                 | {id, created_at: .created_at}
               ]
               | sort_by(.created_at)
@@ -320,93 +248,8 @@ jobs:
               | .[5:][]
               | .id
             ' | while read id; do
-              echo "删除 $image $SLUG 旧版本 $id"
+              echo "删除 $service 旧版本 $id"
               curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-                "https://api.github.com/users/$GHCR_USERNAME/packages/container/$image/versions/$id"
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/$service/versions/$id"
             done
           done
-
-      # ==================== 通知 ====================
-      - name: 发送钉钉通知
-        if: success() || failure()
-        env:
-          ACCESS_TOKEN: ${{ steps.target.outputs.DING_ACCESS }}
-          SECRET: ${{ steps.target.outputs.DING_SECRET }}
-        run: |
-          set +e
-          SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
-          SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
-          START_TIME=${{ needs.build.outputs.START_TIME }}
-          DURATION=$(( $(date +%s) - START_TIME ))
-          MIN=$(( DURATION / 60 ))
-          SEC=$(( DURATION % 60 ))
-
-          SERVICES=""
-          [ "${{ needs.build.outputs.DEPLOY_SERVER }}" = "true" ] && SERVICES="$SERVICES lins-server"
-          [ "${{ needs.build.outputs.DEPLOY_AGENT }}" = "true" ] && SERVICES="$SERVICES lins-agent"
-          SERVICES=$(echo "$SERVICES" | xargs)
-
-          # 兼容完整 URL 格式的 access_token
-          ACCESS_TOKEN="${ACCESS_TOKEN##*access_token=}"
-          ACCESS_TOKEN="${ACCESS_TOKEN%%&*}"
-
-          TIMESTAMP=$(($(date +%s) * 1000))
-          echo "Debug: TIMESTAMP=$TIMESTAMP"
-          echo "Debug: ACCESS_TOKEN=${ACCESS_TOKEN:0:10}..."
-          echo "Debug: SECRET length=${#SECRET}"
-
-          printf '%s\n%s' "$TIMESTAMP" "$SECRET" > /tmp/sign_input.txt
-          echo "Debug: sign_input hex:"
-          xxd /tmp/sign_input.txt | head -3
-
-          SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
-          echo "Debug: SIGN=${SIGN:0:20}..."
-          WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
-          echo "Debug: WEBHOOK=${WEBHOOK:0:60}..."
-
-          AUTHOR=${{ needs.build.outputs.AUTHOR }}
-
-          if [ "${{ job.status }}" = "success" ]; then
-            MSG=$(printf '✅ 构建部署成功\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n耗时：%d分%d秒\n服务：%s' \
-              "${{ gitea.repository }}" \
-              "$SLUG" \
-              "$SHORT_SHA" \
-              "${{ gitea.message }}" \
-              "$AUTHOR" \
-              "$MIN" "$SEC" \
-              "$SERVICES")
-          else
-            ROLLBACK_INFO=""
-            [ "${{ env.SERVER_ROLLBACK }}" = "true" ] && ROLLBACK_INFO="lins-server 容器启动失败，已回滚旧版本，失败镜像已从 GHCR 删除"
-            [ "${{ env.AGENT_ROLLBACK }}" = "true" ] && ROLLBACK_INFO="${ROLLBACK_INFO:+${ROLLBACK_INFO}\n}lins-agent 容器启动失败，已回滚旧版本，失败镜像已从 GHCR 删除"
-            if [ -n "$ROLLBACK_INFO" ]; then
-              MSG=$(printf '❌ 构建部署失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s\n%s' \
-                "${{ gitea.repository }}" \
-                "$SLUG" \
-                "$SHORT_SHA" \
-                "${{ gitea.message }}" \
-                "$AUTHOR" \
-                "$SERVICES" \
-                "$ROLLBACK_INFO")
-            else
-              MSG=$(printf '❌ 构建部署失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s' \
-                "${{ gitea.repository }}" \
-                "$SLUG" \
-                "$SHORT_SHA" \
-                "${{ gitea.message }}" \
-                "$AUTHOR" \
-                "$SERVICES")
-            fi
-          fi
-
-          echo "Debug: MSG=$MSG"
-          echo "Debug: curl request:"
-          jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}' > /tmp/dingtalk_payload.json
-          cat /tmp/dingtalk_payload.json
-
-          curl -v -X POST "$WEBHOOK" \
-            -H "Content-Type: application/json" \
-            -d @/tmp/dingtalk_payload.json \
-            2>&1
-
-          echo "Debug: curl exit code: $?"
