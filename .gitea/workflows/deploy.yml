@@ -84,9 +84,11 @@ jobs:
         if: steps.changes.outputs.build_server == 'true'
         run: |
           SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
-          mkdir -p /cache/docker-build
-          docker save "$IMAGE_SERVER:$SLUG-buildcache" | gzip > \
-            "/cache/docker-build/$SLUG-lins-server-buildcache.tar.gz"
+          CACHE_FILE="/cache/docker-build/$SLUG-lins-server-buildcache.tar.gz"
+          if [ ! -f "$CACHE_FILE" ]; then
+            mkdir -p /cache/docker-build
+            docker save "$IMAGE_SERVER:$SLUG-buildcache" | gzip > "$CACHE_FILE"
+          fi
 
       # ==================== lins-agent 构建 ====================
       - name: 加载 agent 缓存
@@ -112,9 +114,11 @@ jobs:
         if: steps.changes.outputs.build_agent == 'true'
         run: |
           SLUG=${{ steps.vars.outputs.IMAGE_SLUG }}
-          mkdir -p /cache/docker-build
-          docker save "$IMAGE_AGENT:$SLUG-buildcache" | gzip > \
-            "/cache/docker-build/$SLUG-lins-agent-buildcache.tar.gz"
+          CACHE_FILE="/cache/docker-build/$SLUG-lins-agent-buildcache.tar.gz"
+          if [ ! -f "$CACHE_FILE" ]; then
+            mkdir -p /cache/docker-build
+            docker save "$IMAGE_AGENT:$SLUG-buildcache" | gzip > "$CACHE_FILE"
+          fi
 
   # ==================== 部署 ====================
   deploy:
@@ -336,6 +340,10 @@ jobs:
           [ "${{ needs.build.outputs.DEPLOY_SERVER }}" = "true" ] && SERVICES="$SERVICES lins-server"
           [ "${{ needs.build.outputs.DEPLOY_AGENT }}" = "true" ] && SERVICES="$SERVICES lins-agent"
           SERVICES=$(echo "$SERVICES" | xargs)
+
+          # 兼容完整 URL 格式的 access_token
+          ACCESS_TOKEN="${ACCESS_TOKEN##*access_token=}"
+          ACCESS_TOKEN="${ACCESS_TOKEN%%&*}"
 
           TIMESTAMP=$(date +%s%3N)
           echo "Debug: TIMESTAMP=$TIMESTAMP"
