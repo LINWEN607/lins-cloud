@@ -148,7 +148,7 @@ jobs:
               docker compose down &&
               docker compose up -d &&
               for i in \$(seq 1 15); do
-                if docker compose ps ${service} --format '{{.State}}' 2>/dev/null | grep -q running; then
+                if docker compose ps ${service} 2>/dev/null | grep -q "Up"; then
                   echo 'DEPLOY_OK'; exit 0
                 fi
                 sleep 2
