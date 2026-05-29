@@ -324,6 +324,7 @@ jobs:
           ACCESS_TOKEN: ${{ steps.target.outputs.DING_ACCESS }}
           SECRET: ${{ steps.target.outputs.DING_SECRET }}
         run: |
+          set +e
           SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
           SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
           START_TIME=${{ needs.build.outputs.START_TIME }}
@@ -337,8 +338,18 @@ jobs:
           SERVICES=$(echo "$SERVICES" | xargs)
 
           TIMESTAMP=$(date +%s%3N)
+          echo "Debug: TIMESTAMP=$TIMESTAMP"
+          echo "Debug: ACCESS_TOKEN=${ACCESS_TOKEN:0:10}..."
+          echo "Debug: SECRET length=${#SECRET}"
+
+          printf '%s\n%s' "$TIMESTAMP" "$SECRET" > /tmp/sign_input.txt
+          echo "Debug: sign_input hex:"
+          xxd /tmp/sign_input.txt | head -3
+
           SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
+          echo "Debug: SIGN=${SIGN:0:20}..."
           WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
+          echo "Debug: WEBHOOK=${WEBHOOK:0:60}..."
 
           if [ "${{ job.status }}" = "success" ]; then
             MSG="✅ 构建部署成功\n"
@@ -365,6 +376,14 @@ jobs:
             fi
           fi
 
-          curl -s -X POST "$WEBHOOK" \
+          echo "Debug: MSG=$MSG"
+          echo "Debug: curl request:"
+          jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}' > /tmp/dingtalk_payload.json
+          cat /tmp/dingtalk_payload.json
+
+          curl -v -X POST "$WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "$(jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}')"
+            -d @/tmp/dingtalk_payload.json \
+            2>&1
+
+          echo "Debug: curl exit code: $?"
