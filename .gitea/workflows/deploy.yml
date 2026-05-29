@@ -26,12 +26,16 @@ jobs:
     steps:
       - name: 拉取代码
         run: |
-          git clone --depth 1 "${{ gitea.server_url }}/${{ gitea.repository }}.git" .
+          git clone --depth 2 "${{ gitea.server_url }}/${{ gitea.repository }}.git" .
 
       - name: 检测变更项目
         id: changes
         run: |
-          CHANGED=$(git diff --name-only ${{ gitea.before }} ${{ gitea.sha }})
+          if ! git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            CHANGED=$(git diff --name-only 4b825dc642cb6eb9a060e54bf899d153036e1e9f HEAD)
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          fi
           echo "Changed: $CHANGED"
           echo "$CHANGED" | grep -q "^lins-server/" && \
             echo "$CHANGED" | grep -vq "^lins-server/docker-compose.yml" && \
@@ -110,6 +114,7 @@ jobs:
   # ==================== 部署 ====================
   deploy:
     needs: build
+    if: needs.build.outputs.DEPLOY_SERVER == 'true' || needs.build.outputs.DEPLOY_AGENT == 'true'
     runs-on: self-hosted
     defaults:
       run:
@@ -157,10 +162,10 @@ jobs:
         run: |
           SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
           SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
-          BUILD_SERVER=${{ needs.build.outputs.BUILD_SERVER }}
-          BUILD_AGENT=${{ needs.build.outputs.BUILD_AGENT }}
           DEPLOY_SERVER=${{ needs.build.outputs.DEPLOY_SERVER }}
           DEPLOY_AGENT=${{ needs.build.outputs.DEPLOY_AGENT }}
+          BUILD_SERVER=${{ needs.build.outputs.BUILD_SERVER }}
+          BUILD_AGENT=${{ needs.build.outputs.BUILD_AGENT }}
           SERVER_HOST=${{ steps.target.outputs.SERVER_HOST }}
           SERVER_PASS=${{ steps.target.outputs.SERVER_PASS }}
           AGENT_HOST=${{ steps.target.outputs.AGENT_HOST }}
@@ -209,14 +214,14 @@ jobs:
                   echo 'SERVER_DEPLOY_FAILED' &&
                   exit 1
                 fi
-              " && echo ">>> lins-server 部署成功" || SERVER_ROLLBACK=true
+              " || SERVER_ROLLBACK=true
             else
               export SSHPASS="$SERVER_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$SERVER_HOST" "
                 cd /data/linscloud/lins-server &&
                 docker compose down &&
                 docker compose up -d
-              " && echo ">>> lins-server 重启成功" || echo ">>> lins-server 重启失败"
+              "
             fi
           fi
 
@@ -260,20 +265,19 @@ jobs:
                   echo 'AGENT_DEPLOY_FAILED' &&
                   exit 1
                 fi
-              " && echo ">>> lins-agent 部署成功" || AGENT_ROLLBACK=true
+              " || AGENT_ROLLBACK=true
             else
               export SSHPASS="$AGENT_PASS"
               sshpass -e ssh -o StrictHostKeyChecking=no "root@$AGENT_HOST" "
                 cd /data/linscloud/lins-agent &&
                 docker compose down &&
                 docker compose up -d
-              " && echo ">>> lins-agent 重启成功" || echo ">>> lins-agent 重启失败"
+              "
             fi
           fi
 
           echo "SERVER_ROLLBACK=$SERVER_ROLLBACK" >> $GITHUB_ENV
           echo "AGENT_ROLLBACK=$AGENT_ROLLBACK" >> $GITHUB_ENV
-
           if [ "$SERVER_ROLLBACK" = true ] || [ "$AGENT_ROLLBACK" = true ]; then
             exit 1
           fi
@@ -283,25 +287,24 @@ jobs:
         env:
           TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
+          SLUG=${{ needs.build.outputs.IMAGE_SLUG }}
           for image in lins-server lins-agent; do
             curl -s -H "Authorization: Bearer $TOKEN" \
               "https://api.github.com/users/$GHCR_USERNAME/packages/container/$image/versions" \
               > /tmp/versions-$image.json
-            for slug in main release dev; do
-              cat /tmp/versions-$image.json | jq -r '
-                [.[]
-                  | select(.metadata.container.tags | any(startswith("'"$slug"'-")))
-                  | {id, created_at: .created_at}
-                ]
-                | sort_by(.created_at)
-                | reverse
-                | .[5:][]
-                | .id
-              ' | while read id; do
-                echo "删除 $image $slug 旧版本 $id"
-                curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-                  "https://api.github.com/users/$GHCR_USERNAME/packages/container/$image/versions/$id"
-              done
+            cat /tmp/versions-$image.json | jq -r '
+              [.[]
+                | select(.metadata.container.tags | any(startswith("'"$SLUG"'-")))
+                | {id, created_at: .created_at}
+              ]
+              | sort_by(.created_at)
+              | reverse
+              | .[5:][]
+              | .id
+            ' | while read id; do
+              echo "删除 $image $SLUG 旧版本 $id"
+              curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/$image/versions/$id"
             done
           done
 
@@ -319,13 +322,8 @@ jobs:
           SEC=$(( DURATION % 60 ))
 
           SERVICES=""
-          DEPLOY_SERVER=${{ needs.build.outputs.DEPLOY_SERVER }}
-          DEPLOY_AGENT=${{ needs.build.outputs.DEPLOY_AGENT }}
-          BUILD_SERVER=${{ needs.build.outputs.BUILD_SERVER }}
-          BUILD_AGENT=${{ needs.build.outputs.BUILD_AGENT }}
-
-          [ "$DEPLOY_SERVER" = "true" ] && SERVICES="$SERVICES lins-server"
-          [ "$DEPLOY_AGENT" = "true" ] && SERVICES="$SERVICES lins-agent"
+          [ "${{ needs.build.outputs.DEPLOY_SERVER }}" = "true" ] && SERVICES="$SERVICES lins-server"
+          [ "${{ needs.build.outputs.DEPLOY_AGENT }}" = "true" ] && SERVICES="$SERVICES lins-agent"
           SERVICES=$(echo "$SERVICES" | xargs)
 
           TIMESTAMP=$(date +%s%3N)
