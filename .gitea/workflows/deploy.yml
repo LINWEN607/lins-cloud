@@ -184,12 +184,17 @@ jobs:
       - name: 发送通知
         if: success() || failure()
         env:
-          WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+          ACCESS_TOKEN: ${{ secrets.DINGTALK_ACCESS_TOKEN }}
+          SECRET: ${{ secrets.DINGTALK_SECRET }}
         run: |
           SHORT_SHA=$(echo ${{ gitea.sha }} | cut -c1-8)
           DURATION=$(( $(date +%s) - START_TIME ))
           MIN=$(( DURATION / 60 ))
           SEC=$(( DURATION % 60 ))
+
+          TIMESTAMP=$(date +%s%3N)
+          SIGN=$(echo -n "$TIMESTAMP\n$SECRET" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 -w 0)
+          WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
 
           SERVICES=""
           [ "${{ steps.changes.outputs.build_server }}" = "true" ] && SERVICES="$SERVICES lins-server"
