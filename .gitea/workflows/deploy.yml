@@ -3,7 +3,7 @@ name: 构建和部署
 on:
   push:
     branches: [main, release, dev]
-    paths: ['lins-server/**', 'lins-agent/**']
+    paths: ["lins-server/**", "lins-agent/**"]
 
 env:
   IMAGE_SERVER: ghcr.io/linwen607/lins-server
@@ -345,7 +345,7 @@ jobs:
           ACCESS_TOKEN="${ACCESS_TOKEN##*access_token=}"
           ACCESS_TOKEN="${ACCESS_TOKEN%%&*}"
 
-          TIMESTAMP=$(date +%s%3N)
+          TIMESTAMP=$(($(date +%s) * 1000))
           echo "Debug: TIMESTAMP=$TIMESTAMP"
           echo "Debug: ACCESS_TOKEN=${ACCESS_TOKEN:0:10}..."
           echo "Debug: SECRET length=${#SECRET}"
