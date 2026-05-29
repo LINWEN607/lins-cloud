@@ -38,6 +38,9 @@ jobs:
       - name: 登录 GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 
+      - name: 开始计时
+        run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+
       # ==================== Server ====================
       - name: 构建和推送 lins-server
         if: steps.changes.outputs.build_server == 'true'
@@ -76,6 +79,7 @@ jobs:
               docker rmi $IMAGE_SERVER:\$OLD_TAG 2>/dev/null || true
               echo '=== 部署成功 ==='
             else
+              echo 'SERVER_ROLLBACK=true' >> \$GITHUB_ENV
               echo '=== 启动失败，回退到旧版本 ===' &&
               sed -i 's|image: $IMAGE_SERVER:.*|image: $IMAGE_SERVER:\$OLD_TAG|' docker-compose.yml &&
               docker compose down &&
@@ -131,6 +135,7 @@ jobs:
               docker rmi $IMAGE_AGENT:\$OLD_TAG 2>/dev/null || true
               echo '=== 部署成功 ==='
             else
+              echo 'AGENT_ROLLBACK=true' >> \$GITHUB_ENV
               echo '=== 启动失败，回退到旧版本 ===' &&
               sed -i 's|image: $IMAGE_AGENT:.*|image: $IMAGE_AGENT:\$OLD_TAG|' docker-compose.yml &&
               docker compose down &&
@@ -174,3 +179,47 @@ jobs:
               curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
                 "https://api.github.com/users/$GHCR_USERNAME/packages/container/lins-agent/versions/$id"
             done
+
+      # ==================== 通知 ====================
+      - name: 发送通知
+        if: success() || failure()
+        env:
+          WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+        run: |
+          SHORT_SHA=$(echo ${{ gitea.sha }} | cut -c1-8)
+          DURATION=$(( $(date +%s) - START_TIME ))
+          MIN=$(( DURATION / 60 ))
+          SEC=$(( DURATION % 60 ))
+
+          SERVICES=""
+          [ "${{ steps.changes.outputs.build_server }}" = "true" ] && SERVICES="$SERVICES lins-server"
+          [ "${{ steps.changes.outputs.build_agent }}" = "true" ] && SERVICES="$SERVICES lins-agent"
+          [ -z "$SERVICES" ] && [ "${{ steps.changes.outputs.deploy_server }}" = "true" ] && SERVICES="lins-server(仅部署)"
+          [ -z "$SERVICES" ] && [ "${{ steps.changes.outputs.deploy_agent }}" = "true" ] && SERVICES="lins-agent(仅部署)"
+
+          if [ "${{ job.status }}" = "success" ]; then
+            MSG="✅ 构建部署成功\n"
+            MSG="$MSG 项目：${{ gitea.repository }} (${{ gitea.ref }})\n"
+            MSG="$MSG 提交：${SHORT_SHA} ${{ gitea.message }}\n"
+            MSG="$MSG 提交人：${{ gitea.actor }}\n"
+            MSG="$MSG 耗时：${MIN}分${SEC}秒\n"
+            MSG="$MSG 服务：$SERVICES\n"
+          else
+            MSG="❌ 构建部署失败\n"
+            MSG="$MSG 项目：${{ gitea.repository }} (${{ gitea.ref }})\n"
+            MSG="$MSG 提交：${SHORT_SHA} ${{ gitea.message }}\n"
+            MSG="$MSG 提交人：${{ gitea.actor }}\n"
+            MSG="$MSG 服务：$SERVICES\n"
+            if [ "${{ env.SERVER_ROLLBACK }}" = "true" ]; then
+              MSG="$MSG lins-server 容器启动失败，已回滚旧版本\n"
+              MSG="$MSG 失败镜像已从 GHCR 删除\n"
+            fi
+            if [ "${{ env.AGENT_ROLLBACK }}" = "true" ]; then
+              MSG="$MSG lins-agent 容器启动失败，已回滚旧版本\n"
+              MSG="$MSG 失败镜像已从 GHCR 删除\n"
+            fi
+          fi
+
+          curl -s -X POST "$WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}')"
