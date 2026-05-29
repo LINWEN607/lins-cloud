@@ -175,7 +175,7 @@ jobs:
           AGENT_ROLLBACK=false
 
           # ===== lins-server =====
-          if [ "$DEPLOY_SERVER" = "true" ]; then
+          if [ "$DEPLOY_SERVER" = "true" ] && [ "$SERVER_HOST" != "" ]; then
             echo "===== 部署 lins-server 到 $SERVER_HOST ====="
             if [ "$BUILD_SERVER" = "true" ]; then
               export SSHPASS="$SERVER_PASS"
@@ -226,7 +226,7 @@ jobs:
           fi
 
           # ===== lins-agent =====
-          if [ "$DEPLOY_AGENT" = "true" ]; then
+          if [ "$DEPLOY_AGENT" = "true" ] && [ "$AGENT_HOST" != "" ]; then
             echo "===== 部署 lins-agent 到 $AGENT_HOST ====="
             if [ "$BUILD_AGENT" = "true" ]; then
               export SSHPASS="$AGENT_PASS"
