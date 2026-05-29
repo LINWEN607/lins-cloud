@@ -14,3 +14,4 @@ COPY --from=builder /build/target/lins-agent-release.jar app.jar
 EXPOSE 9998
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
+

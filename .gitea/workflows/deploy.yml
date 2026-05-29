@@ -24,6 +24,7 @@ jobs:
       DEPLOY_SERVER: ${{ steps.changes.outputs.deploy_server }}
       DEPLOY_AGENT: ${{ steps.changes.outputs.deploy_agent }}
       START_TIME: ${{ steps.timer.outputs.START_TIME }}
+      AUTHOR: ${{ steps.author.outputs.AUTHOR }}
     steps:
       - name: 记录开始时间
         id: timer
@@ -32,6 +33,10 @@ jobs:
       - name: 拉取代码
         run: |
           git clone --depth 2 "${{ gitea.server_url }}/${{ gitea.repository }}.git" .
+
+      - name: 获取提交人
+        id: author
+        run: echo "AUTHOR=$(git log -1 --format='%an')" >> $GITHUB_OUTPUT
 
       - name: 检测变更项目
         id: changes
@@ -359,28 +364,38 @@ jobs:
           WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
           echo "Debug: WEBHOOK=${WEBHOOK:0:60}..."
 
+          AUTHOR=${{ needs.build.outputs.AUTHOR }}
+
           if [ "${{ job.status }}" = "success" ]; then
-            MSG="✅ 构建部署成功\n"
-            MSG="$MSG 项目：${{ gitea.repository }}\n"
-            MSG="$MSG 分支：$SLUG\n"
-            MSG="$MSG 提交：${SHORT_SHA} ${{ gitea.message }}\n"
-            MSG="$MSG 提交人：${{ gitea.actor }}\n"
-            MSG="$MSG 耗时：${MIN}分${SEC}秒\n"
-            MSG="$MSG 服务：$SERVICES\n"
+            MSG=$(printf '✅ 构建部署成功\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n耗时：%d分%d秒\n服务：%s' \
+              "${{ gitea.repository }}" \
+              "$SLUG" \
+              "$SHORT_SHA" \
+              "${{ gitea.message }}" \
+              "$AUTHOR" \
+              "$MIN" "$SEC" \
+              "$SERVICES")
           else
-            MSG="❌ 构建部署失败\n"
-            MSG="$MSG 项目：${{ gitea.repository }}\n"
-            MSG="$MSG 分支：$SLUG\n"
-            MSG="$MSG 提交：${SHORT_SHA} ${{ gitea.message }}\n"
-            MSG="$MSG 提交人：${{ gitea.actor }}\n"
-            MSG="$MSG 服务：$SERVICES\n"
-            if [ "${{ env.SERVER_ROLLBACK }}" = "true" ]; then
-              MSG="$MSG lins-server 容器启动失败，已回滚旧版本\n"
-              MSG="$MSG 失败镜像已从 GHCR 删除\n"
-            fi
-            if [ "${{ env.AGENT_ROLLBACK }}" = "true" ]; then
-              MSG="$MSG lins-agent 容器启动失败，已回滚旧版本\n"
-              MSG="$MSG 失败镜像已从 GHCR 删除\n"
+            ROLLBACK_INFO=""
+            [ "${{ env.SERVER_ROLLBACK }}" = "true" ] && ROLLBACK_INFO="lins-server 容器启动失败，已回滚旧版本，失败镜像已从 GHCR 删除"
+            [ "${{ env.AGENT_ROLLBACK }}" = "true" ] && ROLLBACK_INFO="${ROLLBACK_INFO:+${ROLLBACK_INFO}\n}lins-agent 容器启动失败，已回滚旧版本，失败镜像已从 GHCR 删除"
+            if [ -n "$ROLLBACK_INFO" ]; then
+              MSG=$(printf '❌ 构建部署失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s\n%s' \
+                "${{ gitea.repository }}" \
+                "$SLUG" \
+                "$SHORT_SHA" \
+                "${{ gitea.message }}" \
+                "$AUTHOR" \
+                "$SERVICES" \
+                "$ROLLBACK_INFO")
+            else
+              MSG=$(printf '❌ 构建部署失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s' \
+                "${{ gitea.repository }}" \
+                "$SLUG" \
+                "$SHORT_SHA" \
+                "${{ gitea.message }}" \
+                "$AUTHOR" \
+                "$SERVICES")
             fi
           fi
 
