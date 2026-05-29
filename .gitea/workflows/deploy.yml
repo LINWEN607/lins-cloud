@@ -21,7 +21,11 @@ jobs:
       IMAGE_SLUG: ${{ steps.vars.outputs.IMAGE_SLUG }}
       BUILD_MATRIX: ${{ steps.changes.outputs.BUILD_MATRIX }}
       AUTHOR: ${{ steps.author.outputs.AUTHOR }}
+      START_TIME: ${{ steps.timer.outputs.START_TIME }}
     steps:
+      - name: 安装工具
+        run: apk add --no-cache jq openssh-client sshpass curl openssl 2>/dev/null || true
+
       - name: 记录开始时间
         id: timer
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_OUTPUT
@@ -93,7 +97,7 @@ jobs:
 
   deploy:
     needs: build
-    if: needs.build.outputs.BUILD_MATRIX != '{}'
+    if: success() && needs.build.outputs.BUILD_MATRIX != '{}'
     runs-on: self-hosted
     defaults:
       run:
@@ -186,6 +190,7 @@ jobs:
 
           SHORT_SHA=${{ needs.build.outputs.SHORT_SHA }}
           AUTHOR=${{ needs.build.outputs.AUTHOR }}
+          START_TIME=${{ needs.build.outputs.START_TIME }}
           DURATION=$(( $(date +%s) - START_TIME ))
           MIN=$(( DURATION / 60 ))
           SEC=$(( DURATION % 60 ))
