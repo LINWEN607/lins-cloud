@@ -11,6 +11,7 @@ variables:
   IMAGE_PREFIX: ghcr.io/linwen607
   GHCR_USERNAME: LINWEN607
   SERVICES: "lins-server lins-agent"
+  DEPLOY_PATH: "/data/linscloud"
   GIT_DEPTH: "50"
 
 # 流水线触发条件：只有目标分支才运行
@@ -21,12 +22,36 @@ workflow:
 # ====== 构建阶段 ======
 build:
   stage: build
+  artifacts:
+    paths:
+      - build-services.txt
+    when: always
   before_script:
     - printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
   script:
     - |
-      # 第一轮：构建全部服务
+      # 检测变更的服务
+      if ! git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+        CHANGED=$(git diff --name-only 4b825dc642cb6eb9a060e54bf899d153036e1e9f HEAD)
+      else
+        CHANGED=$(git diff --name-only HEAD~1 HEAD)
+      fi
+
+      BUILD_SERVICES=""
       for service in $SERVICES; do
+        if echo "$CHANGED" | grep -q "^${service}/"; then
+          [ -n "$BUILD_SERVICES" ] && BUILD_SERVICES="${BUILD_SERVICES} "
+          BUILD_SERVICES="${BUILD_SERVICES}${service}"
+        fi
+      done
+
+      echo "变更服务: [$BUILD_SERVICES]"
+      echo "$BUILD_SERVICES" > build-services.txt
+
+      [ -z "$BUILD_SERVICES" ] && echo "无服务变更，跳过构建" && exit 0
+
+      # 第一轮：构建变更的服务
+      for service in $BUILD_SERVICES; do
         echo "========== 构建 ${service} =========="
         CACHE_FILE="/cache/docker-build/${SLUG}-${service}-buildcache.tar.gz"
         mkdir -p /cache/docker-build
@@ -40,7 +65,7 @@ build:
       done
 
       # 第二轮：全部成功后推送 + 缓存 + 清理
-      for service in $SERVICES; do
+      for service in $BUILD_SERVICES; do
         echo "========== 推送 ${service} =========="
         docker push "$IMAGE_PREFIX/${service}:${SLUG}-$CI_COMMIT_SHORT_SHA"
         CACHE_FILE="/cache/docker-build/${SLUG}-${service}-buildcache.tar.gz"
@@ -73,11 +98,18 @@ deploy:
       SKIPPED_SERVICES=""
       DEPLOYED_COUNT=0
 
-      for service in $SERVICES; do
+      if [ -f build-services.txt ]; then
+        DEPLOY_SERVICES=$(cat build-services.txt)
+      else
+        DEPLOY_SERVICES="$SERVICES"
+      fi
+      [ -z "$DEPLOY_SERVICES" ] && echo "无服务变更，跳过部署" && echo "success" > deploy-status.txt && echo "" > failed-service.txt && echo "" > succeeded-services.txt && echo "" > skipped-services.txt && exit 0
+
+      for service in $DEPLOY_SERVICES; do
         echo "========== 部署 ${service} =========="
 
         RESULT=$(sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "root@$SSH_HOST" "
-          cd /data/linscloud/${service} &&
+          cd ${DEPLOY_PATH}/${service} &&
           COMPOSE_FILE=\$(ls docker-compose.yaml docker-compose.yml 2>/dev/null | head -1) &&
           if [ -z \"\$COMPOSE_FILE\" ]; then echo 'COMPOSE_NOT_FOUND'; exit 0; fi &&
           OLD_TAG=\$(grep 'image: $IMAGE_PREFIX/${service}:' \"\$COMPOSE_FILE\" | sed 's|.*$IMAGE_PREFIX/${service}:||') &&
@@ -136,7 +168,7 @@ deploy:
       # 统计未部署的服务
       if [ "$DEPLOY_STATUS" != "success" ]; then
         COUNT=0
-        for s in $SERVICES; do
+        for s in $DEPLOY_SERVICES; do
           COUNT=$((COUNT + 1))
           if [ "$COUNT" -gt "$DEPLOYED_COUNT" ] && [ "$s" != "$FAILED_SERVICE" ]; then
             [ -n "$SKIPPED_SERVICES" ] && SKIPPED_SERVICES="${SKIPPED_SERVICES}, "
@@ -152,7 +184,7 @@ deploy:
 
       # 部署不成功时清理 GHCR 上的失败镜像（兜底）
       if [ "$DEPLOY_STATUS" != "success" ]; then
-        for service in $SERVICES; do
+        for service in $DEPLOY_SERVICES; do
           curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
             "https://api.github.com/users/$GHCR_USERNAME/packages/container/${service}/versions" \
             | jq -r --arg tag "${SLUG}-${CI_COMMIT_SHORT_SHA}" \
@@ -191,9 +223,8 @@ notify:
       AUTHOR=$(git log -1 --format='%an')
       MSG_TITLE=$(git log -1 --format='%s' | head -c 50)
 
-      START_TS=$(date -d "${CI_PIPELINE_CREATED_AT}" +%s 2>/dev/null || echo "")
-      [ -z "$START_TS" ] && START_TS=$(date +%s)
-      DURATION=$(( $(date +%s) - START_TS ))
+      START=$(date -d "$(echo "$CI_PIPELINE_CREATED_AT" | tr T ' ' | sed 's/Z$//')" +%s 2>/dev/null || date +%s)
+      DURATION=$(( $(date +%s) - START ))
       MIN=$(( DURATION / 60 ))
       SEC=$(( DURATION % 60 ))
 
