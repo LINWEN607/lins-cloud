@@ -1,0 +1,132 @@
+image: docker:27
+
+services:
+  - name: docker:27-dind
+    command: ["--registry-mirror", "https://docker.m.daocloud.io"]
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_NAME: ghcr.io/linwen607/linux-log
+  GHCR_USERNAME: LINWEN607
+
+before_script:
+  - printf '%s' "$GHCR_TOKEN" | docker login -u "$GHCR_USERNAME" --password-stdin ghcr.io
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      variables:
+        IMAGE_SLUG: main
+    - if: $CI_COMMIT_BRANCH == "release"
+      variables:
+        IMAGE_SLUG: release
+    - if: $CI_COMMIT_BRANCH == "dev"
+      variables:
+        IMAGE_SLUG: dev
+    - when: never
+  script:
+    - mkdir -p /cache/docker-build
+    - |
+      if [ -f "/cache/docker-build/${IMAGE_SLUG}-buildcache.tar.gz" ]; then
+        docker load -i "/cache/docker-build/${IMAGE_SLUG}-buildcache.tar.gz" || true
+      fi
+    - |
+      docker build \
+        --cache-from "$IMAGE_NAME:${IMAGE_SLUG}-buildcache" \
+        -t "$IMAGE_NAME:${IMAGE_SLUG}-$CI_COMMIT_SHORT_SHA" \
+        -t "$IMAGE_NAME:${IMAGE_SLUG}-buildcache" \
+        .
+    - docker push "$IMAGE_NAME:${IMAGE_SLUG}-$CI_COMMIT_SHORT_SHA"
+    - docker save "$IMAGE_NAME:${IMAGE_SLUG}-buildcache" | gzip > "/cache/docker-build/${IMAGE_SLUG}-buildcache.tar.gz"
+
+deploy:
+  stage: deploy
+  needs: [build]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "release"
+    - if: $CI_COMMIT_BRANCH == "dev"
+    - when: never
+  script:
+    - |
+      case $CI_COMMIT_BRANCH in
+        main)
+          SSH_HOST="$SSH_HOST_MAIN"
+          SSH_PASS="$SSH_PASSWORD_MAIN"
+          DEPLOY_PATH="/data/linux/"
+          IMAGE_SLUG="main"
+          ;;
+        release)
+          SSH_HOST="$SSH_HOST_RELEASE"
+          SSH_PASS="$SSH_PASSWORD_RELEASE"
+          DEPLOY_PATH="/data/linux-release/"
+          IMAGE_SLUG="release"
+          ;;
+        dev)
+          SSH_HOST="$SSH_HOST_DEV"
+          SSH_PASS="$SSH_PASSWORD_DEV"
+          DEPLOY_PATH="/data/linux-dev/"
+          IMAGE_SLUG="dev"
+          ;;
+      esac
+    - sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache openssh-client sshpass
+    - |
+      sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "root@$SSH_HOST" "
+        cd $DEPLOY_PATH &&
+        OLD_TAG=\$(grep 'image: ghcr.io/linwen607/linux-log:' docker-compose.yaml | sed 's|.*linux-log:\(.*\)|\1|') &&
+        echo \"=== 当前版本: \${OLD_TAG}, 新版本: ${IMAGE_SLUG}-${CI_COMMIT_SHORT_SHA} ===\" &&
+        printf '%s' '${GHCR_TOKEN}' | docker login ghcr.io -u '${GHCR_USERNAME}' --password-stdin &&
+        sed -i \"s|image: ghcr.io/linwen607/linux-log:.*|image: ghcr.io/linwen607/linux-log:${IMAGE_SLUG}-${CI_COMMIT_SHORT_SHA}|\" docker-compose.yaml &&
+        docker compose pull &&
+        docker compose down &&
+        docker compose up -d &&
+        SUCCESS=false &&
+        for i in \$(seq 1 15); do
+          if docker inspect --format='{{.State.Running}}' linux-message-bot 2>/dev/null | grep -q true; then
+            SUCCESS=true
+            break
+          fi
+          sleep 2
+        done &&
+        if [ \"\$SUCCESS\" = true ]; then
+          docker rmi ghcr.io/linwen607/linux-log:\${OLD_TAG} 2>/dev/null || true
+          echo '=== deploy 成功 ==='
+        else
+          echo '=== 启动失败，回退到旧版本 ===' &&
+          sed -i \"s|image: ghcr.io/linwen607/linux-log:.*|image: ghcr.io/linwen607/linux-log:\${OLD_TAG}|\" docker-compose.yaml &&
+          docker compose down &&
+          docker rmi ghcr.io/linwen607/linux-log:${IMAGE_SLUG}-${CI_COMMIT_SHORT_SHA} 2>/dev/null || true &&
+          docker compose up -d &&
+          echo \"=== 已回退到旧版本 \${OLD_TAG} ===\" &&
+          exit 1
+        fi
+      "
+    - |
+      set +e
+      apk add --no-cache curl jq
+      curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
+        "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions" \
+        > /tmp/versions.json
+      for slug in main release dev; do
+        cat /tmp/versions.json | jq -r '
+          [.[]
+            | select(.metadata.container.tags | any(startswith("'"$slug"'-")))
+            | {id, created_at: .created_at}
+          ]
+          | sort_by(.created_at)
+          | reverse
+          | .[3:][]
+          | .id
+        ' | while read id; do
+          echo "删除 $slug 旧版本 $id"
+          curl -s -X DELETE -H "Authorization: Bearer $GHCR_TOKEN" \
+            "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions/$id"
+        done
+      done
+      set -e
