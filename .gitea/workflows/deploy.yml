@@ -1,0 +1,357 @@
+name: Build and Deploy Multi-Service
+
+on:
+  push:
+    branches: ['*']                # 所有分支推送都触发，由 job 条件过滤
+
+env:
+  SLUG: "main"                    # 切换分支只改这一行
+  IMAGE_NAME: ghcr.io/linwen607/linux-log
+  GHCR_USERNAME: LINWEN607
+  SERVICES: "server agent lins"   # 所有服务列表（变更检测基于此）
+  COMPOSE_DIR: "/data/dpanel/data/compose/gitea-runner"   # 远程 compose 目录（默认值，可按分支用 Secret 覆盖）
+  COMPOSE_FILE: "dpanel-deploy.yaml"                     # compose 文件名
+  KEEP_VERSIONS: "5"              # GHCR 保留最近 N 个版本
+
+# 需要配置的 Secrets：
+#   GHCR_TOKEN                              - GHCR 镜像仓库 Token
+#   SSH_PASS_SERVER_main                    - main 分支的服务器密码
+#   SSH_HOST_SERVER_main                    - main 分支的服务器地址
+#   SSH_PASS_SERVER_dev                     - dev 分支的服务器密码
+#   SSH_HOST_SERVER_dev                     - dev 分支的服务器地址
+#   COMPOSE_DIR_main                        - main 分支的远程 compose 目录（可选，覆盖默认值）
+#   COMPOSE_DIR_dev                         - dev 分支的远程 compose 目录（可选，覆盖默认值）
+#   DINGTALK_ACCESS_TOKEN_main              - main 分支的钉钉 Access Token
+#   DINGTALK_SECRET_main                    - main 分支的钉钉 Secret
+#   DINGTALK_ACCESS_TOKEN_dev               - dev 分支的钉钉 Access Token
+#   DINGTALK_SECRET_dev                     - dev 分支的钉钉 Secret
+
+jobs:
+  # ====== 构建阶段 ======
+  build:
+    if: github.ref_name == env.SLUG
+    runs-on: ubuntu-latest
+    outputs:
+      changed_services: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Detect changed services
+        id: detect
+        run: |
+          CHANGED=""
+          PREV=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          if [ -n "$PREV" ]; then
+            DIFF_FILES=$(git diff --name-only "$PREV" HEAD)
+          else
+            DIFF_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null || echo "")
+          fi
+
+          for service in $SERVICES; do
+            if echo "$DIFF_FILES" | grep -q "^${service}/"; then
+              [ -n "$CHANGED" ] && CHANGED="$CHANGED "
+              CHANGED="${CHANGED}${service}"
+            fi
+          done
+
+          if [ -z "$CHANGED" ]; then
+            echo "=== 无服务变更，跳过构建 ==="
+          else
+            echo "=== 变更服务: $CHANGED ==="
+          fi
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: GHCR Login
+        if: steps.detect.outputs.changed != ''
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build & Push changed services
+        if: steps.detect.outputs.changed != ''
+        run: |
+          CHANGED="${{ steps.detect.outputs.changed }}"
+          SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          CACHE_DIR="/cache/docker-build"
+          mkdir -p "$CACHE_DIR"
+
+          # ===== 阶段一：构建所有变更服务（任一失败直接退出，不推送任何镜像）=====
+          for service in $CHANGED; do
+            CACHE_FILE="${CACHE_DIR}/${SLUG}-${service}-buildcache.tar.gz"
+            # 加载本地缓存加速构建
+            [ -f "$CACHE_FILE" ] && docker load -i "$CACHE_FILE" || true
+
+            docker build \
+              --build-arg BUILDKIT_INLINE_CACHE=1 \
+              --cache-from "$IMAGE_NAME:${SLUG}-${service}-buildcache" \
+              -t "$IMAGE_NAME:${SLUG}-${service}-${SHA}" \
+              -t "$IMAGE_NAME:${SLUG}-${service}-buildcache" \
+              -f "${service}/Dockerfile" "${service}/"
+          done
+
+          # ===== 阶段二：全部构建成功后，统一推送 + 保存缓存 + 清理 =====
+          for service in $CHANGED; do
+            docker push "$IMAGE_NAME:${SLUG}-${service}-${SHA}"
+
+            CACHE_FILE="${CACHE_DIR}/${SLUG}-${service}-buildcache.tar.gz"
+            docker save "$IMAGE_NAME:${SLUG}-${service}-buildcache" | gzip > "$CACHE_FILE"
+            docker rmi "$IMAGE_NAME:${SLUG}-${service}-${SHA}" "$IMAGE_NAME:${SLUG}-${service}-buildcache" 2>/dev/null || true
+          done
+
+          docker image prune -f
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+  # ====== 部署 & 通知阶段 ======
+  deploy:
+    needs: [build]
+    if: always() && needs.build.result != 'skipped' && needs.build.outputs.changed_services != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Install tools & GHCR Login
+        run: |
+          sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache openssh-client sshpass curl jq openssl 2>/dev/null || true
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Deploy
+        if: needs.build.result == 'success'
+        run: |
+          set +e
+          SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          AUTHOR=$(git log -1 --format='%an')
+          CHANGED="${{ needs.build.outputs.changed_services }}"
+
+          # 动态获取当前分支对应的服务器配置
+          eval SSH_PASS=\$SSH_PASS_SERVER_${SLUG}
+          eval SSH_HOST=\$SSH_HOST_SERVER_${SLUG}
+
+          # 动态获取 compose 路径（支持按分支 Secret 覆盖默认值）
+          eval CUSTOM_DIR=\$COMPOSE_DIR_${SLUG}
+          [ -n "$CUSTOM_DIR" ] && COMPOSE_DIR="$CUSTOM_DIR"
+
+          # 逐个变更服务部署（串行，任一失败回滚）
+          DEPLOY_STATUS="success"
+          FAILED_SERVICE=""
+          SUCCEEDED_SERVICES=""
+          DEPLOYED_COUNT=0
+
+          for service in $CHANGED; do
+            echo "========== 部署 ${service} =========="
+
+            RESULT=$(sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no "root@$SSH_HOST" "
+              cd ${COMPOSE_DIR}/ &&
+              OLD_TAG=\$(grep \"image: $IMAGE_NAME:${SLUG}-${service}\" ${COMPOSE_FILE} | sed \"s|.*$IMAGE_NAME:${SLUG}-${service}:||\") &&
+              echo \"=== ${service}: 当前版本 \${OLD_TAG}, 新版本 ${SLUG}-${service}-${SHA} ===\" &&
+              printf '%s' '$GHCR_TOKEN' | docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin &&
+              sed -i \"s|image: $IMAGE_NAME:${SLUG}-${service}:.*|image: $IMAGE_NAME:${SLUG}-${service}:${SHA}|\" ${COMPOSE_FILE} &&
+              docker compose pull ${service} &&
+              docker compose up -d ${service} &&
+              # 检测容器是否启动成功（30s 超时）
+              for i in \$(seq 1 15); do
+                if docker ps 2>/dev/null | awk -v n=\"${service}\" 'NR>1 && \$NF ~ n {f=1} END{exit !f}'; then
+                  echo 'DEPLOY_OK'
+                  docker rmi $IMAGE_NAME:\${OLD_TAG} 2>/dev/null || true
+                  exit 0
+                fi
+                sleep 2
+              done &&
+              # 启动失败，回滚到旧版本
+              echo '=== ${service} 启动失败，回退到旧版本 ===' &&
+              sed -i \"s|image: $IMAGE_NAME:${SLUG}-${service}:.*|image: $IMAGE_NAME:${SLUG}-${service}:\${OLD_TAG}|\" ${COMPOSE_FILE} &&
+              docker compose up -d ${service} &&
+              docker rmi $IMAGE_NAME:${SLUG}-${service}-${SHA} 2>/dev/null || true &&
+              # 删除 GHCR 上的失败镜像
+              curl -s -H \"Authorization: Bearer $GHCR_TOKEN\" \
+                \"https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions\" \
+                | jq -r --arg tag \"${SLUG}-${service}-${SHA}\" \
+                  '.[] | select(.metadata.container.tags | any(. == \$tag)) | .id' \
+                | while read id; do
+                  curl -s -X DELETE -H \"Authorization: Bearer $GHCR_TOKEN\" \
+                    \"https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions/\$id\"
+                done &&
+              echo 'DEPLOY_ROLLBACK'
+            " 2>&1)
+
+            echo "$RESULT"
+
+            if echo "$RESULT" | grep -q "DEPLOY_OK"; then
+              echo "${service}: 部署成功"
+              [ -n "$SUCCEEDED_SERVICES" ] && SUCCEEDED_SERVICES="${SUCCEEDED_SERVICES}, "
+              SUCCEEDED_SERVICES="${SUCCEEDED_SERVICES}${service}"
+              DEPLOYED_COUNT=$((DEPLOYED_COUNT + 1))
+            elif echo "$RESULT" | grep -q "DEPLOY_ROLLBACK"; then
+              echo "${service}: 启动失败，已回滚"
+              DEPLOY_STATUS="rollback"
+              FAILED_SERVICE="$service"
+              break
+            else
+              echo "${service}: 部署出错"
+              DEPLOY_STATUS="failure"
+              FAILED_SERVICE="$service"
+              break
+            fi
+          done
+
+          # 统计未部署的变更服务
+          SKIPPED_SERVICES=""
+          if [ "$DEPLOY_STATUS" != "success" ]; then
+            COUNT=0
+            for s in $CHANGED; do
+              COUNT=$((COUNT + 1))
+              if [ "$COUNT" -gt "$DEPLOYED_COUNT" ] && [ "$s" != "$FAILED_SERVICE" ]; then
+                [ -n "$SKIPPED_SERVICES" ] && SKIPPED_SERVICES="${SKIPPED_SERVICES}, "
+                SKIPPED_SERVICES="${SKIPPED_SERVICES}${s}"
+              fi
+            done
+          fi
+
+          echo "$DEPLOY_STATUS" > /tmp/deploy-status
+          echo "$FAILED_SERVICE" > /tmp/failed-service
+          echo "$SUCCEEDED_SERVICES" > /tmp/succeeded-services
+          echo "$SKIPPED_SERVICES" > /tmp/skipped-services
+
+          # 部署不成功时清理 GHCR 上的失败镜像（兜底）
+          if [ "$DEPLOY_STATUS" != "success" ]; then
+            for service in $CHANGED; do
+              curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions" \
+                | jq -r --arg tag "${SLUG}-${service}-${SHA}" \
+                  '.[] | select(.metadata.container.tags | any(. == $tag)) | .id' \
+                | while read id; do
+                  curl -s -X DELETE -H "Authorization: Bearer $GHCR_TOKEN" \
+                    "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions/$id"
+                done
+            done
+          fi
+
+          set -e
+          [ "$DEPLOY_STATUS" = "success" ]
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          SSH_PASS_SERVER_main: ${{ secrets.SSH_PASS_SERVER_main }}
+          SSH_HOST_SERVER_main: ${{ secrets.SSH_HOST_SERVER_main }}
+          SSH_PASS_SERVER_dev: ${{ secrets.SSH_PASS_SERVER_dev }}
+          SSH_HOST_SERVER_dev: ${{ secrets.SSH_HOST_SERVER_dev }}
+          COMPOSE_DIR_main: ${{ secrets.COMPOSE_DIR_main }}
+          COMPOSE_DIR_dev: ${{ secrets.COMPOSE_DIR_dev }}
+
+      - name: Notify
+        if: always()
+        run: |
+          sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache jq curl openssl 2>/dev/null || true
+
+          # 动态获取当前分支对应的钉钉配置
+          eval DINGTALK_TOKEN=\$DINGTALK_ACCESS_TOKEN_${SLUG}
+          eval DINGTALK_SECRET=\$DINGTALK_SECRET_${SLUG}
+          ACCESS_TOKEN="${DINGTALK_TOKEN##*access_token=}"
+          ACCESS_TOKEN="${ACCESS_TOKEN%%&*}"
+
+          CHANGED="${{ needs.build.outputs.changed_services }}"
+
+          # 读取部署状态
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            DEPLOY_STATUS=""
+            FAILED_SERVICE=""
+            SUCCEEDED_SERVICES=""
+            SKIPPED_SERVICES=""
+          else
+            DEPLOY_STATUS=$(cat /tmp/deploy-status 2>/dev/null || echo "failure")
+            FAILED_SERVICE=$(cat /tmp/failed-service 2>/dev/null || echo "")
+            SUCCEEDED_SERVICES=$(cat /tmp/succeeded-services 2>/dev/null || echo "")
+            SKIPPED_SERVICES=$(cat /tmp/skipped-services 2>/dev/null || echo "")
+          fi
+
+          SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          AUTHOR=$(git log -1 --format='%an')
+          MSG_TITLE=$(git log -1 --format='%s')
+          START=$(date -d "$(echo "$GITHUB_STARTED_AT" | tr T ' ' | sed 's/Z$//')" +%s 2>/dev/null || date +%s)
+          DURATION=$(( $(date +%s) - START ))
+          MIN=$(( DURATION / 60 ))
+          SEC=$(( DURATION % 60 ))
+
+          # 钉钉签名
+          TIMESTAMP=$(($(date +%s) * 1000))
+          SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$DINGTALK_SECRET" | openssl dgst -sha256 -hmac "$DINGTALK_SECRET" -binary | base64 -w 0)
+          WEBHOOK="https://oapi.dingtalk.com/robot/send?access_token=$ACCESS_TOKEN&timestamp=$TIMESTAMP&sign=$SIGN"
+
+          # 按状态组装消息
+          if [ -z "$DEPLOY_STATUS" ]; then
+            MSG=$(printf '❌ 构建失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n耗时：%d分%d秒' \
+              "$GITHUB_REPOSITORY" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$MIN" "$SEC")
+          elif [ "$DEPLOY_STATUS" = "success" ]; then
+            MSG=$(printf '✅ 构建部署成功\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s\n耗时：%d分%d秒' \
+              "$GITHUB_REPOSITORY" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$CHANGED" "$MIN" "$SEC")
+          else
+            # 部分失败：分服务展示状态
+            DETAIL=""
+            if [ -n "$SUCCEEDED_SERVICES" ]; then
+              DETAIL="${DETAIL}✅ 部署成功：${SUCCEEDED_SERVICES}\n"
+            fi
+            if [ -n "$FAILED_SERVICE" ]; then
+              if [ "$DEPLOY_STATUS" = "rollback" ]; then
+                DETAIL="${DETAIL}❌ 回滚：${FAILED_SERVICE}（已回滚旧版本，已删除失败镜像）\n"
+              else
+                DETAIL="${DETAIL}❌ 失败：${FAILED_SERVICE}\n"
+              fi
+            fi
+            if [ -n "$SKIPPED_SERVICES" ]; then
+              DETAIL="${DETAIL}⏭  未部署：${SKIPPED_SERVICES}\n"
+            fi
+            MSG=$(printf '❌ 部分服务部署失败\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n\n%s耗时：%d分%d秒' \
+              "$GITHUB_REPOSITORY" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$DETAIL" "$MIN" "$SEC")
+          fi
+
+          curl -s -X POST "$WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg msg "$MSG" '{msgtype:"text",text:{content:$msg}}')"
+        env:
+          DINGTALK_ACCESS_TOKEN_main: ${{ secrets.DINGTALK_ACCESS_TOKEN_main }}
+          DINGTALK_SECRET_main: ${{ secrets.DINGTALK_SECRET_main }}
+          DINGTALK_ACCESS_TOKEN_dev: ${{ secrets.DINGTALK_ACCESS_TOKEN_dev }}
+          DINGTALK_SECRET_dev: ${{ secrets.DINGTALK_SECRET_dev }}
+
+  # ====== GHCR 旧版本清理阶段 ======
+  cleanup:
+    needs: [build, deploy]
+    if: always() && needs.build.result != 'skipped' && needs.build.outputs.changed_services != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup old versions
+        run: |
+          sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache curl jq 2>/dev/null || true
+
+          CHANGED="${{ needs.build.outputs.changed_services }}"
+          for service in $CHANGED; do
+            echo "========== 清理 ${service} 旧版本 =========="
+
+            curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
+              "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions" \
+              > /tmp/versions-${service}.json
+
+            # 按创建时间排序，保留最近 N 个，排除 buildcache 标签
+            cat /tmp/versions-${service}.json | jq -r --arg prefix "${SLUG}-${service}" --argjson keep "$KEEP_VERSIONS" '
+              [.[]
+                | select(.metadata.container.tags | any(startswith($prefix + "-")))
+                | select(.metadata.container.tags | map(. == "buildcache") | any | not)
+                | {id, created_at: .created_at}
+              ]
+              | sort_by(.created_at)
+              | reverse
+              | .[$keep:][]
+              | .id
+            ' | while read id; do
+              echo "删除 ${service} 旧版本 $id"
+              curl -s -X DELETE -H "Authorization: Bearer $GHCR_TOKEN" \
+                "https://api.github.com/users/$GHCR_USERNAME/packages/container/linux-log/versions/$id"
+            done
+          done
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
