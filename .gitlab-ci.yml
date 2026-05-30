@@ -109,7 +109,7 @@ deploy:
       - succeeded-services.txt
       - skipped-services.txt
   script:
-    - apk add --no-cache openssh-client sshpass curl jq
+    - sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache openssh-client sshpass curl jq
     - |
       set +e
       eval SSH_PASS=\$SSH_PASS_SERVER_${SLUG}
@@ -225,10 +225,9 @@ deploy:
 notify:
   <<: *always-rules
   stage: notify
-  needs: [deploy]
   before_script: []
   script:
-    - apk add --no-cache jq curl openssl
+    - sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache jq curl openssl
     - |
       if [ -f deploy-status.txt ]; then
         DEPLOY_STATUS=$(cat deploy-status.txt)
@@ -291,10 +290,9 @@ notify:
 cleanup:
   <<: *always-rules
   stage: cleanup
-  needs: [deploy]
   before_script: []
   script:
-    - apk add --no-cache curl jq
+    - sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories && apk add --no-cache curl jq
     - |
       CLEAN_SERVICES=$(cat build-services.txt 2>/dev/null || echo "$SERVICES")
       for service in $CLEAN_SERVICES; do
