@@ -5,12 +5,6 @@ stages:
   - notify     # 钉钉通知（独立，确保任何状态都触发）
   - cleanup    # 清理 GHCR 旧版本
 
-image: docker:27
-
-services:
-  - name: docker:27-dind
-    command: ["--registry-mirror", "https://docker.m.daocloud.io"]
-
 variables:
   SLUG: "main"               # 分支标识，切换分支时改这一行
   IMAGE_PREFIX: ghcr.io/linwen607
