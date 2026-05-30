@@ -1,3 +1,4 @@
+image: docker:27
 # 流水线阶段
 stages:
   - build      # 构建镜像并推送 GHCR
