@@ -14,6 +14,29 @@ variables:
   DEPLOY_PATH: "/data/linscloud"
   GIT_DEPTH: "50"
 
+# 变更检测路径（新增服务时在此添加）
+.service-changes: &service-changes
+  - lins-server/**/*
+  - lins-agent/**/*
+
+# 默认规则：仅变更时创建，上游成功才执行
+.default-rules: &default-rules
+  rules:
+    - if: $CI_COMMIT_BRANCH != $SLUG
+      when: never
+    - changes: *service-changes
+      when: on_success
+    - when: never
+
+# 始终执行规则：仅变更时创建，任何状态都执行（通知/清理）
+.always-rules: &always-rules
+  rules:
+    - if: $CI_COMMIT_BRANCH != $SLUG
+      when: never
+    - changes: *service-changes
+      when: always
+    - when: never
+
 # 流水线触发条件：只有目标分支才运行
 workflow:
   rules:
@@ -21,6 +44,7 @@ workflow:
 
 # ====== 构建阶段 ======
 build:
+  <<: *default-rules
   stage: build
   artifacts:
     paths:
@@ -30,11 +54,11 @@ build:
     - printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
   script:
     - |
-      # 检测变更的服务
-      if ! git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+      # 检测变更的服务（使用 GitLab 内置的 before/after SHA，准确处理多次提交）
+      if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
         CHANGED=$(git diff --name-only 4b825dc642cb6eb9a060e54bf899d153036e1e9f HEAD)
       else
-        CHANGED=$(git diff --name-only HEAD~1 HEAD)
+        CHANGED=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA")
       fi
 
       BUILD_SERVICES=""
@@ -47,8 +71,6 @@ build:
 
       echo "变更服务: [$BUILD_SERVICES]"
       echo "$BUILD_SERVICES" > build-services.txt
-
-      [ -z "$BUILD_SERVICES" ] && echo "无服务变更，跳过构建" && exit 0
 
       # 第一轮：构建变更的服务
       for service in $BUILD_SERVICES; do
@@ -77,6 +99,7 @@ build:
 
 # ====== 部署阶段 ======
 deploy:
+  <<: *default-rules
   stage: deploy
   artifacts:
     when: always   # 失败也保留，供 notify 读取
@@ -98,12 +121,11 @@ deploy:
       SKIPPED_SERVICES=""
       DEPLOYED_COUNT=0
 
-      if [ -f build-services.txt ]; then
-        DEPLOY_SERVICES=$(cat build-services.txt)
-      else
-        DEPLOY_SERVICES="$SERVICES"
-      fi
-      [ -z "$DEPLOY_SERVICES" ] && echo "无服务变更，跳过部署" && echo "success" > deploy-status.txt && echo "" > failed-service.txt && echo "" > succeeded-services.txt && echo "" > skipped-services.txt && exit 0
+      DEPLOY_SERVICES=$(cat build-services.txt 2>/dev/null)
+      [ -z "$DEPLOY_SERVICES" ] && DEPLOY_SERVICES="$SERVICES"
+
+      eval CUSTOM_PATH=\$DEPLOY_PATH_${SLUG}
+      [ -n "$CUSTOM_PATH" ] && DEPLOY_PATH="$CUSTOM_PATH"
 
       for service in $DEPLOY_SERVICES; do
         echo "========== 部署 ${service} =========="
@@ -201,11 +223,9 @@ deploy:
 
 # ====== 钉钉通知阶段（任何结果都执行） ======
 notify:
+  <<: *always-rules
   stage: notify
-  when: always
   needs: [deploy]
-  dependencies:
-    - deploy
   before_script: []
   script:
     - apk add --no-cache jq curl openssl
@@ -218,6 +238,8 @@ notify:
       else
         DEPLOY_STATUS=""
       fi
+
+      CHANGED_SERVICES=$(cat build-services.txt 2>/dev/null || echo "$SERVICES")
 
       SHA="$CI_COMMIT_SHORT_SHA"
       AUTHOR=$(git log -1 --format='%an')
@@ -241,7 +263,7 @@ notify:
           "$CI_PROJECT_PATH" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$MIN" "$SEC")
       elif [ "$DEPLOY_STATUS" = "success" ]; then
         MSG=$(printf '✅ 构建部署成功\n项目：%s\n分支：%s\n提交：%s %s\n提交人：%s\n服务：%s\n耗时：%d分%d秒' \
-          "$CI_PROJECT_PATH" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$SERVICES" "$MIN" "$SEC")
+          "$CI_PROJECT_PATH" "$SLUG" "$SHA" "$MSG_TITLE" "$AUTHOR" "$CHANGED_SERVICES" "$MIN" "$SEC")
       else
         DETAIL=""
         if [ -n "$SUCCEEDED_SERVICES" ]; then
@@ -267,19 +289,20 @@ notify:
 
 # ====== GHCR 旧版本清理阶段 ======
 cleanup:
+  <<: *always-rules
   stage: cleanup
-  when: always
   needs: [deploy]
   before_script: []
   script:
     - apk add --no-cache curl jq
     - |
-      for service in $SERVICES; do
+      CLEAN_SERVICES=$(cat build-services.txt 2>/dev/null || echo "$SERVICES")
+      for service in $CLEAN_SERVICES; do
         echo "========== 清理 ${service} 旧版本 =========="
         curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
           "https://api.github.com/users/$GHCR_USERNAME/packages/container/${service}/versions" \
           > /tmp/versions-${service}.json
-        cat /tmp/versions-${service}.json | jq -r --arg slug "$SLUG" --arg svc "${service}" '
+        cat /tmp/versions-${service}.json | jq -r --arg slug "$SLUG" '
           [.[]
             | select(.metadata.container.tags | any(startswith($slug + "-")))
             | select(.metadata.container.tags | any(contains("buildcache")) | not)
